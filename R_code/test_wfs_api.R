@@ -1,4 +1,3 @@
-
 # Load libraries
 library(httr)
 library(sf)
