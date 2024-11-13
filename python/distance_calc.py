@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import openrouteservice
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -12,6 +13,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+# Main script
+start_time = time.perf_counter()
+
 try:
     os.chdir("/home/silas/projects/msc_thesis")
     logging.info("Changed working directory.")
@@ -19,7 +23,7 @@ try:
     # Set parameters
     n = 100
     buffer_distance = 600
-    api_key= "YOUR_API_KEY"
+    api_key= "5b3ce3597851110001cf624865e19fb4d0c2400e9aba8877785f6853"
 
     # Import datasets
     flats_zh = gpd.read_file('./data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp')
@@ -60,7 +64,6 @@ try:
     results['duration'] = 0.0
 
     for idx, row in results.iterrows():
-        try:
             flat_coords = flats_subset.loc[flats_subset['egid'] == row['flat_id'], 'geometry'].values[0]
             rcp_coords = rcps.geometry[row['rcp']]
             coords = ([flat_coords.x, flat_coords.y], [rcp_coords.x, rcp_coords.y])
@@ -69,8 +72,6 @@ try:
             duration = route['features'][0]['properties']['segments'][0]['duration']
             results.at[idx, 'distance'] = distance
             results.at[idx, 'duration'] = duration / 60
-        except Exception as e:
-            logging.error(f"Error calculating route for flat {row['flat_id']} and RCP {row['rcp']}: {e}")
 
     logging.info("Calculated walking routes.")
 
@@ -81,6 +82,8 @@ try:
     flats_subset_with_rcp.drop(columns=['buffer', 'flat_id'], inplace=True)
     flats_subset_with_rcp.to_file('./data/derived_data/flats_subset_with_rcp.shp')
     logging.info("Mapped closest RCPs and saved shapefile.")
+    logging.info("Process completed.")
+    logging.info(f"Elapsed time: {time.perf_counter() - start_time} seconds.")
 
 except Exception as e:
     logging.critical(f"An unexpected error occurred: {e}")
