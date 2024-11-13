@@ -13,17 +13,18 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Main script
 start_time = time.perf_counter()
 
+# Set parameters
+n = 100
+buffer_distance = 600
+api_key= "5b3ce3597851110001cf624865e19fb4d0c2400e9aba8877785f6853"
+
+# Execute script
 try:
     os.chdir("/home/silas/projects/msc_thesis")
     logging.info("Changed working directory.")
 
-    # Set parameters
-    n = 100
-    buffer_distance = 600
-    api_key= "5b3ce3597851110001cf624865e19fb4d0c2400e9aba8877785f6853"
 
     # Import datasets
     flats_zh = gpd.read_file('./data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp')
