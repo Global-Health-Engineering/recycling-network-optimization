@@ -67,7 +67,7 @@ try:
             flat_coords = flats_subset.loc[flats_subset['egid'] == row['flat_id'], 'geometry'].values[0]
             rcp_coords = rcps.geometry[row['rcp']]
             coords = ([flat_coords.x, flat_coords.y], [rcp_coords.x, rcp_coords.y])
-            route = client.directions(coordinates=coords, profile='foot-walking', format='geojson')
+            route = client.d5b3ce3597851110001cf624865e19fb4d0c2400e9aba8877785f6853irections(coordinates=coords, profile='foot-walking', format='geojson')
             distance = route['features'][0]['properties']['segments'][0]['distance']
             duration = route['features'][0]['properties']['segments'][0]['duration']
             results.at[idx, 'distance'] = distance
@@ -83,7 +83,9 @@ try:
     flats_subset_with_rcp.to_file('./data/derived_data/flats_subset_with_rcp.shp')
     logging.info("Mapped closest RCPs and saved shapefile.")
     logging.info("Process completed.")
-    logging.info(f"Elapsed time: {time.perf_counter() - start_time} seconds.")
+    elapsed_time = time.perf_counter() - start_time
+    minutes, seconds = divmod(elapsed_time, 60)
+    logging.info(f"Elapsed time: {int(minutes)} minutes and {int(seconds)} seconds.")
 
 except Exception as e:
     logging.critical(f"An unexpected error occurred: {e}")
