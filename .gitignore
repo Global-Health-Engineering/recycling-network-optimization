@@ -3,3 +3,5 @@ __pycache__/
 .env
 .Rproj.user
 /data
+*.log
+/python/.vscode
