@@ -12,7 +12,7 @@ INPUT_RCPS = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zueric
 OUTPUT_GPKG_5 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_5min.gpkg"
 OUTPUT_GPKG_10 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_10min.gpkg"
 TIME_LIMITS = [300, 600]  # in seconds
-n = 10
+n = 10 # number of recycling points to process
 
 # Configure logging
 logging.basicConfig(
@@ -60,6 +60,35 @@ def count_flats_in_isochrones(flats, gdf):
         logging.critical(f"An unexpected error occurred during flat counting: {e}")
 
 
+def generate_and_save_isochrones(client, rcps, time_limit, output_path):
+    iso = []
+    for _, row in rcps.iterrows():
+        lon, lat = row.geometry.x, row.geometry.y
+        isochrone = generate_isochrones(client, [lon, lat], time_limit)
+        if isochrone:
+            for feature in isochrone['features']:
+                properties = feature['properties']
+                cleaned_properties = {k: v for k, v in properties.items() if not isinstance(v, list)}
+                iso.append({
+                    'geometry': shape(feature['geometry']),
+                    'properties': cleaned_properties
+                })
+        logging.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
+    
+    if iso:
+        gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
+        
+        # Import flat data
+        flats = gpd.read_file(INPUT_FLATS)
+        logging.info("Imported flat data.")
+
+        # Count flats within isochrones
+        count_flats_in_isochrones(flats, gdf)
+    
+        gdf.to_file(output_path, driver="GPKG")
+        logging.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
+
+
 def main():
     try:
         client = openrouteservice.Client(key=API_KEY)
@@ -67,34 +96,11 @@ def main():
         logging.info("Imported datasets.")
         rcps = rcps.to_crs(epsg=4326).head(n)
 
-        iso_5 = []
+        # Generate 5-minute isochrones
+        generate_and_save_isochrones(client, rcps, TIME_LIMITS[0], OUTPUT_GPKG_5)
 
-        for _, row in rcps.iterrows():
-            lon, lat = row.geometry.x, row.geometry.y
-            isochrone_5 = generate_isochrones(client, [lon, lat], TIME_LIMITS[0])
-            if isochrone_5:
-                for feature in isochrone_5['features']:
-                    properties = feature['properties']
-                    # Remove fields with list types
-                    cleaned_properties = {k: v for k, v in properties.items() if not isinstance(v, list)}
-                    iso_5.append({
-                        'geometry': shape(feature['geometry']),
-                        'properties': cleaned_properties
-                    })
-            logging.info(f"Processed recycling point {row['poi_id']}.")
-
-        if iso_5:
-            gdf = gpd.GeoDataFrame(iso_5, crs="EPSG:4326")
-            
-            # Import flat data
-            flats = gpd.read_file(INPUT_FLATS)
-            logging.info("Imported flat data.")
-
-            # Count flats within isochrones
-            count_flats_in_isochrones(flats, gdf)
-
-            gdf.to_file(OUTPUT_GPKG_5, driver="GPKG")
-            logging.info(f"Saved 5-min isochrones with flat counts to {OUTPUT_GPKG_5}.")
+        # Generate 10-minute isochrones
+        generate_and_save_isochrones(client, rcps, TIME_LIMITS[1], OUTPUT_GPKG_10)
 
     except Exception as e:
         logging.critical(f"An unexpected error occurred: {e}")
