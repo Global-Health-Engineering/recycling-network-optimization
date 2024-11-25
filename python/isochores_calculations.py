@@ -94,7 +94,7 @@ def main():
         client = openrouteservice.Client(key=API_KEY)
         rcps = gpd.read_file(INPUT_RCPS)
         logging.info("Imported datasets.")
-        rcps = rcps.to_crs(epsg=4326).head(n)
+        rcps = rcps.to_crs(epsg=4326)
 
         # Generate 5-minute isochrones
         generate_and_save_isochrones(client, rcps, TIME_LIMITS[0], OUTPUT_GPKG_5)
