@@ -5,6 +5,8 @@ library(leaflet)
 library(dplyr)
 library(ows4R)
 library(tidyverse)
+library(htmlwidgets)
+
 
 wfs_url <- "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Sammelstelle"
 wfs_client <- WFSClient$new(wfs_url, serviceVersion = "1.0.0")
@@ -57,4 +59,5 @@ leaflet_map <- leaflet(sammelstelle_geo) %>%
     popup = ~name  # Replace 'name' with the appropriate column for popups
   )
 print(leaflet_map)
-
+saveWidget(leaflet_map, file="my_map.html")
+save
