@@ -4,7 +4,7 @@ import numpy as np
 
 # Paths
 POPULATION_POLYGON_PATH = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp'
-OUTPUT_PATH = '/home/silas/projects/msc_thesis/data/derived_data/population_allocation.gpkg'
+OUTPUT_PATH = '/home/silas/projects/msc_thesis/data/derived_data/flats_w/_pop.gpkg'
 FLAT_DB_PATH = "/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp"
 
 # Configure logging
@@ -34,7 +34,7 @@ def allocate_population(flat_db_path, population_polygon_path):
         logging.info("Allocating population to flats based on 'wazim'.")
         est_pop = np.zeros(len(flats))
 
-        for idx, row in flats.iterrows():
+        for i, (_, row) in enumerate(flats.iterrows()):
             # cell_pop variable removed as it is not used
             # Calculate total population and total wazim in the current cell
             cell_pop = row['PERS_N']  
@@ -44,9 +44,9 @@ def allocate_population(flat_db_path, population_polygon_path):
             avg_people_per_wazim = cell_pop / cell_wazim if cell_wazim != 0 else 0
             
             # Allocate population based on average people per wazim
-            est_pop[idx] = row['wazim'] * avg_people_per_wazim
+            est_pop[i] = row['wazim'] * avg_people_per_wazim
 
-            logging.info(f"Flat ID {row['egid']}: Allocated population {est_pop[idx]}")
+            #logging.info(f"Flat ID {row['egid']}: Allocated population {est_pop[idx]}")
 
         #global average population per wazim
         avg_pop_per_wazim = est_pop.sum() / flats['wazim'].sum()
@@ -58,7 +58,7 @@ def allocate_population(flat_db_path, population_polygon_path):
         logging.info("Population allocation completed.")
         flats.to_file(OUTPUT_PATH)
         logging.info(f"Allocated population saved to {OUTPUT_PATH}")
-        logging.info("Total population allocated: ", flats['est_pop'].sum())
+        logging.info(f"Total population allocated: {flats['est_pop'].sum()}")
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
