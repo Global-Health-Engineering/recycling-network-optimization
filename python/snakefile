@@ -1,0 +1,47 @@
+# Snakefile
+
+# Data paths
+RAW_DATA = "/home/silas/projects/msc_thesis/data"
+DERIVED_DATA = "/home/silas/projects/msc_thesis/data/derived_data"
+PLOTS_PATH = "/home/silas/projects/msc_thesis/docs/reports/thesis/figures"
+
+# Configuration
+configfile: "config.yaml"
+
+rule all:
+    input:
+        DERIVED_DATA + "/isochores_5.gpkg",
+        DERIVED_DATA + "/isochores_10.gpkg",
+        DERIVED_DATA + "/flats_subset_with_pop.gpk"
+
+rule population_allocation:
+    input:
+        flats= RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
+        rcps= RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        DERIVED_DATA + "/flats_subset_with_pop.gpk"
+    script:
+        "scripts/population_allocation.py"
+    log:
+        "logs/population_allocation.log"
+
+rule generate_isochrones:
+    input:
+        flats= RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
+        rcps= RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        DERIVED_DATA + "/isochores_10.gpkg"
+        DERIVED_DATA + "/isochores_5.gpkg"
+    script:
+        "scripts/isochores_calculations.py"
+    log:
+        "logs/isochores_calculations.log"
+
+rule calculate_distances_to_rcp:
+    input:
+        flats= RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
+        rcps= RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        DERIVED_DATA + "/flat_duration.shp"
+    script:
+        "scripts/distance_calc.py"
