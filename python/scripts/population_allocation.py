@@ -4,7 +4,7 @@ import numpy as np
 
 # Paths
 POPULATION_POLYGON_PATH = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp'
-OUTPUT_PATH = '/home/silas/projects/msc_thesis/data/derived_data/flats_w/_pop.gpkg'
+OUTPUT_PATH = '/home/silas/projects/msc_thesis/data/derived_data/flats_population.gpkg'
 FLAT_DB_PATH = "/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp"
 
 # Configure logging

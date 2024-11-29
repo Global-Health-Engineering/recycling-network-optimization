@@ -7,7 +7,7 @@ import os
 from shapely.geometry import shape
 
 API_KEY = os.getenv("ORS_API_KEY")
-INPUT_FLATS = "/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp"
+INPUT_FLATS = "/home/silas/projects/msc_thesis/data/derived_data/flats_population.gpkg"
 INPUT_RCPS = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp'
 OUTPUT_GPKG_5 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_5min.gpkg"
 OUTPUT_GPKG_10 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_10min.gpkg"
@@ -21,6 +21,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
 logging.info("Started the script.")
 
 
@@ -29,6 +30,7 @@ def generate_isochrones(client, locations, time_limit):
         params = {
             "locations": [locations],
             "range": [time_limit],
+            "range_type": "time",
             "units": "m",
             "location_type": "start",
             "smoothing": 0.3,
@@ -51,11 +53,13 @@ def count_flats_in_isochrones(flats, gdf):
         existing_flats = existing_flats.to_crs("EPSG:4326")
         logging.info("Converted flats to EPSG:4326.")
 
-        flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
-        counts = flats_in_isochrones.groupby('index_right')['egid'].nunique()
-        gdf['flat_count'] = counts
-        gdf['flat_count'] = gdf['flat_count'].fillna(0).astype(int)
-        logging.info("Added flat counts to isochrones.")
+        flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within', lsuffix='left', rsuffix='right')
+        est_pop = flats_in_isochrones.groupby('index_right')['est_pop'].sum()
+        gdf['est_pop'] = est_pop
+        gdf['est_pop'] = gdf['est_pop'].fillna(0).astype(int)
+        gdf['poi_id'] = gdf.index
+        logging.info("Added population estimation to isochrones.")
+        logging.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
     except Exception as e:
         logging.critical(f"An unexpected error occurred during flat counting: {e}")
 
@@ -71,7 +75,7 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
                 cleaned_properties = {k: v for k, v in properties.items() if not isinstance(v, list)}
                 iso.append({
                     'geometry': shape(feature['geometry']),
-                    'properties': cleaned_properties
+                    'poi_id': row['poi_id']
                 })
         logging.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
     
@@ -80,7 +84,8 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         
         # Import flat data
         flats = gpd.read_file(INPUT_FLATS)
-        logging.info("Imported flat data.")
+        total_pop = flats['est_pop'].sum()
+        logging.info(f"Imported flat data, population estimation: {total_pop}.")
 
         # Count flats within isochrones
         count_flats_in_isochrones(flats, gdf)
