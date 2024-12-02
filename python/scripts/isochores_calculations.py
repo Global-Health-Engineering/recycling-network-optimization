@@ -6,21 +6,28 @@ import sys
 import os
 from shapely.geometry import shape
 
-API_KEY = os.getenv("ORS_API_KEY")
-INPUT_FLATS = "/home/silas/projects/msc_thesis/data/derived_data/flats_population.gpkg"
-INPUT_RCPS = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp'
-OUTPUT_GPKG_5 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_5min.gpkg"
-OUTPUT_GPKG_10 = "/home/silas/projects/msc_thesis/data/derived_data/isochores_10min.gpkg"
-TIME_LIMITS = [300, 600]  # in seconds
-n = 10 # number of recycling points to process
+# Obtain paths from snakemake
+INPUT_FLATS = snakemake.input['flats']
+INPUT_RCPS = snakemake.input['rcps']
+OUTPUT_GPKG_5 = snakemake.output['iso_5min']
+OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 
 # Configure logging
 logging.basicConfig(
-    filename='isochores_calculations.log',
+    filename=snakemake.log[0],
     filemode='a',
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+# Get API key from environment variable or snakemake params
+API_KEY = os.getenv("ORS_API_KEY")
+if not API_KEY:
+    logging.error("OpenRouteService API key not found.")
+    sys.exit(1)
+
+TIME_LIMITS = [300, 600]  # in seconds
+n = 10 # number of recycling points to process
 
 logging.info("Started the script.")
 

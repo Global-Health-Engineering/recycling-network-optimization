@@ -2,19 +2,18 @@ import logging
 import geopandas as gpd
 import numpy as np
 
-# Paths
-POPULATION_POLYGON_PATH = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp'
-OUTPUT_PATH = '/home/silas/projects/msc_thesis/data/derived_data/flats_population.gpkg'
-FLAT_DB_PATH = "/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp"
+# Remove hardcoded paths and configure logging using snakemake variables
+flat_db_path = snakemake.input['flats']
+population_polygon_path = snakemake.input['population']
+output_path = snakemake.output[0]
 
-# Configure logging
 logging.basicConfig(
-    filename='population_allocation.log',
+    filename=snakemake.log[0],
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def allocate_population(flat_db_path, population_polygon_path):
+def allocate_population(flat_db_path, population_polygon_path, output_path):
     try:
         logging.info("Loading flat database.")
         flats = gpd.read_file(flat_db_path)
@@ -56,12 +55,12 @@ def allocate_population(flat_db_path, population_polygon_path):
 
         flats['est_pop'] = est_pop
         logging.info("Population allocation completed.")
-        flats.to_file(OUTPUT_PATH)
-        logging.info(f"Allocated population saved to {OUTPUT_PATH}")
+        flats.to_file(output_path)
+        logging.info(f"Allocated population saved to {output_path}")
         logging.info(f"Total population allocated: {flats['est_pop'].sum()}")
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    allocate_population(FLAT_DB_PATH, POPULATION_POLYGON_PATH)
+    allocate_population(flat_db_path, population_polygon_path, output_path)

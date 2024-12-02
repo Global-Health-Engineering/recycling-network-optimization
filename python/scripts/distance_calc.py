@@ -7,7 +7,7 @@ import time
 
 # Configure logging
 logging.basicConfig(
-    filename='distance_calc.log',
+    filename=snakemake.log[0],
     filemode='a',
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -15,10 +15,17 @@ logging.basicConfig(
 
 start_time = time.perf_counter()
 
-# Set parameters
-n = 100
-buffer_distance = 600
-api_key= "5b3ce3597851110001cf624865e19fb4d0c2400e9aba8877785f6853"
+# Remove hardcoded parameters and paths
+n = snakemake.params.get('n', 100)
+buffer_distance = snakemake.params.get('buffer_distance', 600)
+api_key = os.getenv("ORS_API_KEY")
+if not api_key:
+    logging.error("OpenRouteService API key not found.")
+    sys.exit(1)
+
+FLATS_PATH = snakemake.input['flats']
+RCPS_PATH = snakemake.input['rcps']
+OUTPUT_PATH = snakemake.output[0]
 
 # Execute script
 try:
@@ -27,8 +34,8 @@ try:
 
 
     # Import datasets
-    flats_zh = gpd.read_file('./data/raw_data/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp')
-    rcps = gpd.read_file('./data/raw_data/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp')
+    flats_zh = gpd.read_file(FLATS_PATH)
+    rcps = gpd.read_file(RCPS_PATH)
     logging.info("Imported datasets.")
 
     # Filter data
@@ -81,7 +88,7 @@ try:
     flats_subset_with_rcp = flats_subset.merge(closest_rcp[['flat_id', 'rcp', 'distance', 'duration']], 
                                               left_on='egid', right_on='flat_id', how='left')
     flats_subset_with_rcp.drop(columns=['buffer', 'flat_id'], inplace=True)
-    flats_subset_with_rcp.to_file('./data/derived_data/flats_subset_with_rcp.shp')
+    flats_subset_with_rcp.to_file(OUTPUT_PATH)
     logging.info("Mapped closest RCPs and saved shapefile.")
     logging.info("Process completed.")
     elapsed_time = time.perf_counter() - start_time
