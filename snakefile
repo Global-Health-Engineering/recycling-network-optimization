@@ -1,12 +1,12 @@
 # Snakefile
 
 # Data paths
-RAW_DATA = "/home/silas/projects/msc_thesis/data"
+RAW_DATA = "/home/silas/projects/msc_thesis/data/raw_data"
 DERIVED_DATA = "/home/silas/projects/msc_thesis/data/derived_data"
 PLOTS_PATH = "/home/silas/projects/msc_thesis/docs/reports/thesis/figures"
 
 # Configuration
-configfile: "config.yaml"
+#configfile: "config.yaml"
 
 rule all:
     input:
@@ -22,6 +22,7 @@ rule population_allocation:
         DERIVED_DATA + "/flats_population.gpkg"
     log:
         "logs/population_allocation.log"
+    conda: "envs/geo_env.yaml"
     script:
         "scripts/population_allocation.py"
 
@@ -34,6 +35,7 @@ rule generate_isochrones:
         iso_10min=DERIVED_DATA + "/isochores_10min.gpkg"
     log:
         "logs/isochores_calculations.log"
+    conda: "envs/geo_env.yaml"
     script:
         "scripts/isochores_calculations.py"
 
@@ -45,5 +47,6 @@ rule calculate_distances_to_rcp:
         DERIVED_DATA + "/flats_subset_with_rcp.shp"
     log:
         "logs/distance_calc.log"
+    conda: "envs/geo_env.yaml"
     script:
         "scripts/distance_calc.py"
