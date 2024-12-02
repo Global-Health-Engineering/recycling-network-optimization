@@ -1,0 +1,8 @@
+name: geo_env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - geopandas
+  - shapely
+  - numpy
