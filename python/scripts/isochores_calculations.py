@@ -53,7 +53,9 @@ def count_flats_in_isochrones(flats, gdf):
         logging.info("Converted flats to EPSG:4326.")
 
         # Use 'within' predicate and ensure geometries are valid
-        gdf = gdf.buffer(0)  # Clean up any invalid geometries
+        gdf['geometry'] = gdf['geometry'].buffer(0)  # Clean up any invalid geometries
+        existing_flats = existing_flats.drop(columns=['index_left', 'index_right'], errors='ignore')
+        gdf = gdf.drop(columns=['index_left', 'index_right'], errors='ignore')
         flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
         
         # Log diagnostic information
