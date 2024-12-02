@@ -2,6 +2,7 @@ import geopandas as gpd
 import os
 import pandas as pd
 import openrouteservice
+import snakemake
 import logging
 import time
 
