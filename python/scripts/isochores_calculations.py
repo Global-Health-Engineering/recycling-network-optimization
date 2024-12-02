@@ -44,7 +44,6 @@ def generate_isochrones(client, locations, time_limit):
         logging.error(f"Unexpected error for location {locations}: {e}")
     return None
 
-
 def count_flats_in_isochrones(flats, gdf):
     try:
         existing_flats = flats[flats['wstatlang'] == "Bestehend"]
@@ -53,16 +52,23 @@ def count_flats_in_isochrones(flats, gdf):
         existing_flats = existing_flats.to_crs("EPSG:4326")
         logging.info("Converted flats to EPSG:4326.")
 
-        flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within', lsuffix='left', rsuffix='right')
+        # Use 'within' predicate and ensure geometries are valid
+        gdf = gdf.buffer(0)  # Clean up any invalid geometries
+        flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
+        
+        # Log diagnostic information
+        logging.info(f"Total flats: {len(existing_flats)}")
+        logging.info(f"Flats within isochrones: {len(flats_in_isochrones)}")
+        
         est_pop = flats_in_isochrones.groupby('index_right')['est_pop'].sum()
         gdf['est_pop'] = est_pop
         gdf['est_pop'] = gdf['est_pop'].fillna(0).astype(int)
         gdf['poi_id'] = gdf.index
+        
         logging.info("Added population estimation to isochrones.")
         logging.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
     except Exception as e:
-        logging.critical(f"An unexpected error occurred during flat counting: {e}")
-
+        logging.error(f"An error occurred while counting flats in isochrones: {e}")
 
 def generate_and_save_isochrones(client, rcps, time_limit, output_path):
     iso = []
@@ -75,7 +81,8 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
                 cleaned_properties = {k: v for k, v in properties.items() if not isinstance(v, list)}
                 iso.append({
                     'geometry': shape(feature['geometry']),
-                    'poi_id': row['poi_id']
+                    'poi_id': row['poi_id'],
+                    'properties': cleaned_properties
                 })
         logging.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
     
@@ -92,7 +99,6 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
     
         gdf.to_file(output_path, driver="GPKG")
         logging.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
-
 
 def main():
     try:
