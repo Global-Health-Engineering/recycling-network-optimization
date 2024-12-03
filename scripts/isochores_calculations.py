@@ -1,10 +1,10 @@
 import geopandas as gpd
 import openrouteservice
 from openrouteservice import exceptions
-import logging
 import sys
 import os
 from shapely.geometry import shape
+from snakemake.logging import logger
 
 # Obtain paths from snakemake
 INPUT_FLATS = snakemake.input['flats']
@@ -12,24 +12,16 @@ INPUT_RCPS = snakemake.input['rcps']
 OUTPUT_GPKG_5 = snakemake.output['iso_5min']
 OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 
-# Configure logging
-logging.basicConfig(
-    filename=snakemake.log,
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-
 # Get API key from environment variable or snakemake params
 API_KEY = os.getenv("ORS_API_KEY")
 if not API_KEY:
-    logging.error("OpenRouteService API key not found.")
+    logger.error("OpenRouteService API key not found.")
     sys.exit(1)
 
 TIME_LIMITS = [300, 600]  # in seconds
-n = 10 # number of recycling points to process
+n = 10  # number of recycling points to process
 
-logging.info("Started the script.")
+logger.info("Started the script.")
 
 
 def generate_isochrones(client, locations, time_limit):
@@ -46,18 +38,19 @@ def generate_isochrones(client, locations, time_limit):
         isochrones = client.isochrones(**params)
         return isochrones
     except exceptions.ApiError as e:
-        logging.error(f"API error for location {locations}: {e}")
+        logger.error(f"API error for location {locations}: {e}")
     except Exception as e:
-        logging.error(f"Unexpected error for location {locations}: {e}")
+        logger.error(f"Unexpected error for location {locations}: {e}")
     return None
+
 
 def count_flats_in_isochrones(flats, gdf):
     try:
         existing_flats = flats[flats['wstatlang'] == "Bestehend"]
-        logging.info("Selected existing flats.")
+        logger.info("Selected existing flats.")
 
         existing_flats = existing_flats.to_crs("EPSG:4326")
-        logging.info("Converted flats to EPSG:4326.")
+        logger.info("Converted flats to EPSG:4326.")
 
         # Use 'within' predicate and ensure geometries are valid
         gdf['geometry'] = gdf['geometry'].buffer(0)  # Clean up any invalid geometries
@@ -66,18 +59,19 @@ def count_flats_in_isochrones(flats, gdf):
         flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
         
         # Log diagnostic information
-        logging.info(f"Total flats: {len(existing_flats)}")
-        logging.info(f"Flats within isochrones: {len(flats_in_isochrones)}")
+        logger.info(f"Total flats: {len(existing_flats)}")
+        logger.info(f"Flats within isochrones: {len(flats_in_isochrones)}")
         
         est_pop = flats_in_isochrones.groupby('index_right')['est_pop'].sum()
         gdf['est_pop'] = est_pop
         gdf['est_pop'] = gdf['est_pop'].fillna(0).astype(int)
         gdf['poi_id'] = gdf.index
         
-        logging.info("Added population estimation to isochrones.")
-        logging.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
+        logger.info("Added population estimation to isochrones.")
+        logger.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
     except Exception as e:
-        logging.error(f"An error occurred while counting flats in isochrones: {e}")
+        logger.error(f"An error occurred while counting flats in isochrones: {e}")
+
 
 def generate_and_save_isochrones(client, rcps, time_limit, output_path):
     iso = []
@@ -93,7 +87,7 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
                     'poi_id': row['poi_id'],
                     'properties': cleaned_properties
                 })
-        logging.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
+        logger.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
     
     if iso:
         gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
@@ -101,19 +95,20 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         # Import flat data
         flats = gpd.read_file(INPUT_FLATS)
         total_pop = flats['est_pop'].sum()
-        logging.info(f"Imported flat data, population estimation: {total_pop}.")
-
+        logger.info(f"Imported flat data, population estimation: {total_pop}.")
+        
         # Count flats within isochrones
         count_flats_in_isochrones(flats, gdf)
-    
+        
         gdf.to_file(output_path, driver="GPKG")
-        logging.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
+        logger.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
+
 
 def main():
     try:
         client = openrouteservice.Client(key=API_KEY)
         rcps = gpd.read_file(INPUT_RCPS)
-        logging.info("Imported datasets.")
+        logger.info("Imported datasets.")
         rcps = rcps.to_crs(epsg=4326)
 
         # Generate 5-minute isochrones
@@ -123,8 +118,9 @@ def main():
         generate_and_save_isochrones(client, rcps, TIME_LIMITS[1], OUTPUT_GPKG_10)
 
     except Exception as e:
-        logging.critical(f"An unexpected error occurred: {e}")
+        logger.critical(f"An unexpected error occurred: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
