@@ -45,6 +45,8 @@ rule calculate_distances_to_rcp:
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
         DERIVED_DATA + "/flats_subset_with_rcp.shp"
+    params:
+        n=100 
     log:
         "logs/distance_calc.log"
     conda:
