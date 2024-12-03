@@ -1,12 +1,12 @@
 name: geo_env
 channels:
-  - bioconda
   - conda-forge
+  - defaults
 dependencies:
   - python=3.11
-  - geopandas=0.12.2
-  - logging
-  - shapely
+  - geopandas>=0.13.0
+  - shapely>=2.0.0
+  - numpy
   - pip
   - pip:
     - openrouteservice
