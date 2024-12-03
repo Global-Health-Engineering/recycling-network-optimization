@@ -2,16 +2,16 @@ import geopandas as gpd
 import os
 import pandas as pd
 import openrouteservice
-import snakemake
 import logging
 import time
 from snakemake.logging import logger
+import sys
 
 start_time = time.perf_counter()
 
 # Remove hardcoded parameters and paths
-n = snakemake.params.get('n', 100)
-buffer_distance = snakemake.params.get('buffer_distance', 600)
+n = snakemake.params.n
+buffer_distance = snakemake.params.buffer_distance
 api_key = os.getenv("ORS_API_KEY")
 if not api_key:
     logger.error("OpenRouteService API key not found.")
