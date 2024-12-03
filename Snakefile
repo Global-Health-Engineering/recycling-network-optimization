@@ -46,7 +46,8 @@ rule calculate_distances_to_rcp:
     output:
         DERIVED_DATA + "/flats_subset_with_rcp.shp"
     params:
-        n=100 
+        n=100, # Number of nearest recycling points
+        buffer_distance=500
     log:
         "logs/distance_calc.log"
     conda:
