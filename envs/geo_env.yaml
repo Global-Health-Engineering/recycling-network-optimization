@@ -3,6 +3,10 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - geopandas
+  - python=3.11
+  - geopandas=0.12.2
+  - logging
   - shapely
-  - numpy
+  - pip
+  - pip:
+    - openrouteservice

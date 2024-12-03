@@ -14,7 +14,7 @@ OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 
 # Configure logging
 logging.basicConfig(
-    filename=snakemake.log[0],
+    filename=snakemake.log,
     filemode='a',
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO

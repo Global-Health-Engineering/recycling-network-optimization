@@ -47,6 +47,7 @@ rule calculate_distances_to_rcp:
         DERIVED_DATA + "/flats_subset_with_rcp.shp"
     log:
         "logs/distance_calc.log"
-    conda: "envs/geo_env.yaml"
+    conda:
+        "envs/geo_env.yaml"
     script:
         "scripts/distance_calc.py"
