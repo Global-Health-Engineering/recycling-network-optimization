@@ -39,6 +39,18 @@ rule generate_isochrones:
     script:
         "scripts/isochores_calculations.py"
 
+rule calculate_distance_matrix:
+    input:
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        DERIVED_DATA + "/distance_matrix.csv"
+    log:
+        "logs/distance_matrix.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/distance_matrix.py"
+
 rule calculate_distances_to_rcp:
     input:
         flats=DERIVED_DATA + "/flats_population.gpkg",
