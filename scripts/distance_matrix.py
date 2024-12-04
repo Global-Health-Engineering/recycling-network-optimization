@@ -31,19 +31,8 @@ def calculate_distance_matrix(source_coords):
     try:
         client = get_ors_client()
         matrix = client.distance_matrix(
-        locations=[source_coords, DUMP_COORDS, TRUCK_GARAGE_COORDS],
-        profile='driving-hgv',
-        profile_params={
-        'vehicle_type': 'hgv',
-        'height': 4.0,
-        'width': 2.5,
-        'length': 17,
-        'weight': 48,
-        'axleload': 10.0,
-        'hazmat': False
-    },
-    metrics=['distance']
-)
+            locations=[source_coords, DUMP_COORDS, TRUCK_GARAGE_COORDS],
+            profile='driving-hgv',)
         return matrix
     except openrouteservice.exceptions.ApiError as e:
         logger.error(f"API error: {e}")
