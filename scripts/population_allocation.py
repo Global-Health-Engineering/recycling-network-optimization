@@ -49,6 +49,8 @@ def allocate_population(flat_db_path, population_polygon_path, output_path):
 
         flats['est_pop'] = est_pop
         logger.info("Population allocation completed.")
+        # select only relevant columns
+        flats = flats[['egid', 'est_pop', 'geometry']]
         flats.to_file(output_path)
         logger.info(f"Allocated population saved to {output_path}")
         logger.info(f"Total population allocated: {flats['est_pop'].sum()}")
