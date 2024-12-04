@@ -12,7 +12,8 @@ rule all:
     input:
         DERIVED_DATA + "/isochores_5min.gpkg",
         DERIVED_DATA + "/isochores_10min.gpkg",
-        DERIVED_DATA + "/flats_subset_with_rcp.shp"
+        DERIVED_DATA + "/flats_subset_with_rcp.shp",
+        DERIVED_DATA + "/distance_matrix.csv"
 
 rule population_allocation:
     input:
