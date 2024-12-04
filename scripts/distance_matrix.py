@@ -3,11 +3,12 @@ import os
 from snakemake.logging import logger
 import sys
 import pandas as pd
+import geopandas as gpd
 
 # Constants
 DUMP_COORDS = [8.512281878574365, 47.38447647508825]  # [longitude, latitude]
 TRUCK_GARAGE_COORDS = [8.575500, 47.414889]  # [longitude, latitude]
-source_coords = snakemake.input[0].geometry
+source_coords = gpd.read_file(snakemake.input[0], header=None).geometry.tolist()[0]
 
 def get_ors_client():
     """Initialize OpenRouteService client"""
