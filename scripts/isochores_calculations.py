@@ -92,7 +92,6 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         flats = gpd.read_file(INPUT_FLATS)
         if 'est_pop' not in flats.columns:
             flats['est_pop'] = 0
-        flats = gpd.read_file(INPUT_FLATS)
         total_pop = flats['est_pop'].sum()
         logger.info(f"Imported flat data, population estimation: {total_pop}.")
         
