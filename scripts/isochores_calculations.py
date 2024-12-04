@@ -46,23 +46,17 @@ def generate_isochrones(client, locations, time_limit):
 
 def count_flats_in_isochrones(flats, gdf):
     try:
-        existing_flats = flats[flats['wstatlang'] == "Bestehend"]
-        logger.info("Selected existing flats.")
-
-        existing_flats = existing_flats.to_crs("EPSG:4326")
+        flats = flats.to_crs("EPSG:4326")
         logger.info("Converted flats to EPSG:4326.")
 
         # Use 'within' predicate and ensure geometries are valid
         gdf['geometry'] = gdf['geometry'].buffer(0)  # Clean up any invalid geometries
-        existing_flats = existing_flats.drop(columns=['index_left', 'index_right'], errors='ignore')
-        gdf = gdf.drop(columns=['index_left', 'index_right'], errors='ignore')
-        flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
-        
+        flats_in_isochrones = gpd.sjoin(
+            flats, gdf, how='inner', predicate='within')
         est_pop = flats_in_isochrones.groupby('index_right')['est_pop'].sum()
         gdf['est_pop'] = est_pop
         gdf['est_pop'] = gdf['est_pop'].fillna(0).astype(int)
-        gdf['poi_id'] = gdf.index
-        
+
         logger.info("Added population estimation to isochrones.")
         logger.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
     except Exception as e:
@@ -76,13 +70,9 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         isochrone = generate_isochrones(client, [lon, lat], time_limit)
         if isochrone:
             for feature in isochrone['features']:
-                properties = feature['properties']
-                cleaned_properties = {k: v for k, v in properties.items() if not isinstance(v, list)}
                 iso.append({
                     'geometry': shape(feature['geometry']),
-                    'poi_id': row['poi_id'],
-                    'properties': cleaned_properties,
-                    'est_pop': 0
+                    'poi_id': row['poi_id']
                 })
         logger.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
     
@@ -90,8 +80,6 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
         
         flats = gpd.read_file(INPUT_FLATS)
-        if 'est_pop' not in flats.columns:
-            flats['est_pop'] = 0
         total_pop = flats['est_pop'].sum()
         logger.info(f"Imported flat data, population estimation: {total_pop}.")
         
