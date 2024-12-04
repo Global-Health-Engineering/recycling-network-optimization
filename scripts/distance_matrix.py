@@ -2,13 +2,13 @@ import openrouteservice
 import os
 from snakemake.logging import logger
 import sys
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 
 # Constants
 DUMP_COORDS = [8.512281878574365, 47.38447647508825]  # [longitude, latitude]
 TRUCK_GARAGE_COORDS = [8.575500, 47.414889]  # [longitude, latitude]
-source_coords = gpd.read_file(snakemake.input[0], header=None).geometry.tolist()[0]
+source_coords = gpd.read_file(snakemake.input[0]).geometry.tolist()
 
 def get_ors_client():
     """Initialize OpenRouteService client"""
@@ -18,27 +18,25 @@ def get_ors_client():
         sys.exit(1)
     return openrouteservice.Client(key=api_key)
 
-def calculate_distance_matrix(source_coords):
-    """
-    Calculate distance matrix using OpenRouteService API
-    
-    Args:
-        source_coords (list): List of coordinates [lon, lat]
-    
-    Returns:
-        dict: Distance matrix from OpenRouteService or None if error occurs
-    """
+def calculate_distance_matrix(coordinates):
     try:
-        client = get_ors_client()
+        # Convert shapely Point objects to [longitude, latitude] lists
+        coords_list = [[p.x, p.y] for p in coordinates]
         matrix = client.distance_matrix(
-            locations=[source_coords, DUMP_COORDS, TRUCK_GARAGE_COORDS],
-            profile='driving-hgv',)
-        return matrix
-    except openrouteservice.exceptions.ApiError as e:
-        logger.error(f"API error: {e}")
+            locations=coords_list,
+            metrics=['distance'],
+            profile='driving-car',
+        )
+        # Convert the matrix to a DataFrame for CSV export
+        distances = matrix.get('distances', [])
+        df = pd.DataFrame(distances)
+        return df
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-    return None
+        logger.error(f"Error calculating distance matrix: {e}")
+        return None
+
+# Initialize OpenRouteService client
+client = get_ors_client()
 
 # Execute script
 try:
@@ -47,11 +45,10 @@ try:
 
     # Calculate distance matrix
     matrix = calculate_distance_matrix(source_coords)
-    matrix.to_csv(snakemake.output[0])
-    if matrix:
-        logger.info("Calculated distance matrix.")
+    if matrix is not None:
+        matrix.to_csv(snakemake.output[0], index=False)
+        logger.info("Calculated and saved distance matrix.")
     else:
         logger.error("Failed to calculate distance matrix.")
 finally:
     logger.info("Script finished.")
-    
