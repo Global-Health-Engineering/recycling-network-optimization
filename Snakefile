@@ -11,8 +11,8 @@ PLOTS_PATH = "/home/silas/projects/msc_thesis/docs/reports/thesis/figures"
 rule all:
     input:
         DERIVED_DATA + "/isochores_5min.gpkg",
-        DERIVED_DATA + "/isochores_10min.gpkg",
-        DERIVED_DATA + "/flats_subset_with_rcp.shp",
+        # DERIVED_DATA + "/isochores_10min.gpkg",
+        # DERIVED_DATA + "/flats_subset_with_rcp.shp",
         DERIVED_DATA + "/distance_matrix.csv"
 
 rule population_allocation:
@@ -59,7 +59,7 @@ rule calculate_distances_to_rcp:
     output:
         DERIVED_DATA + "/flats_subset_with_rcp.shp"
     params:
-        n=100, # Number of nearest recycling points
+        n=1, # Number of nearest recycling points
         buffer_distance=500
     log:
         "logs/distance_calc.log"
