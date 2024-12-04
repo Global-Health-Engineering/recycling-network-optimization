@@ -58,10 +58,6 @@ def count_flats_in_isochrones(flats, gdf):
         gdf = gdf.drop(columns=['index_left', 'index_right'], errors='ignore')
         flats_in_isochrones = gpd.sjoin(existing_flats, gdf, how='inner', predicate='within')
         
-        # Log diagnostic information
-        logger.info(f"Total flats: {len(existing_flats)}")
-        logger.info(f"Flats within isochrones: {len(flats_in_isochrones)}")
-        
         est_pop = flats_in_isochrones.groupby('index_right')['est_pop'].sum()
         gdf['est_pop'] = est_pop
         gdf['est_pop'] = gdf['est_pop'].fillna(0).astype(int)
@@ -85,14 +81,17 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
                 iso.append({
                     'geometry': shape(feature['geometry']),
                     'poi_id': row['poi_id'],
-                    'properties': cleaned_properties
+                    'properties': cleaned_properties,
+                    'est_pop': 0
                 })
         logger.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
     
     if iso:
         gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
         
-        # Import flat data
+        flats = gpd.read_file(INPUT_FLATS)
+        if 'est_pop' not in flats.columns:
+            flats['est_pop'] = 0
         flats = gpd.read_file(INPUT_FLATS)
         total_pop = flats['est_pop'].sum()
         logger.info(f"Imported flat data, population estimation: {total_pop}.")
@@ -103,24 +102,18 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         gdf.to_file(output_path, driver="GPKG")
         logger.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
 
+try:
+    client = openrouteservice.Client(key=API_KEY)
+    rcps = gpd.read_file(INPUT_RCPS)
+    logger.info("Imported datasets.")
+    rcps = rcps.to_crs(epsg=4326)
 
-def main():
-    try:
-        client = openrouteservice.Client(key=API_KEY)
-        rcps = gpd.read_file(INPUT_RCPS)
-        logger.info("Imported datasets.")
-        rcps = rcps.to_crs(epsg=4326)
+    # Generate 5-minute isochrones
+    generate_and_save_isochrones(client, rcps, TIME_LIMITS[0], OUTPUT_GPKG_5)
 
-        # Generate 5-minute isochrones
-        generate_and_save_isochrones(client, rcps, TIME_LIMITS[0], OUTPUT_GPKG_5)
+    # Generate 10-minute isochrones
+    generate_and_save_isochrones(client, rcps, TIME_LIMITS[1], OUTPUT_GPKG_10)
 
-        # Generate 10-minute isochrones
-        generate_and_save_isochrones(client, rcps, TIME_LIMITS[1], OUTPUT_GPKG_10)
-
-    except Exception as e:
-        logger.critical(f"An unexpected error occurred: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+except Exception as e:
+    logger.critical(f"An unexpected error occurred: {e}")
+    sys.exit(1)
