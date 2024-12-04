@@ -32,7 +32,7 @@ try:
     logger.info("Imported datasets.")
 
     # Filter data
-    flats_zh_existing = flats_zh.query('wstatlang=="Bestehend"').drop_duplicates(subset=['egid'])
+    flats_zh_existing = flats_zh.drop_duplicates(subset=['egid'])
     flats_zh_existing['egid'] = flats_zh_existing['egid'].astype(int)
     logger.info("Filtered existing flats.")
 
@@ -89,4 +89,4 @@ try:
     logger.info(f"Elapsed time: {int(minutes)} minutes and {int(seconds)} seconds.")
 
 except Exception as e:
-    logger.critical(f"An unexpected error occurred: {e}")
+    logger.error(f"An unexpected error occurred: {e}")
