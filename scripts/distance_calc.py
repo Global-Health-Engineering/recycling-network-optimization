@@ -81,8 +81,8 @@ try:
     flats_subset_with_rcp = flats_subset.merge(closest_rcp[['flat_id', 'rcp', 'distance', 'duration']], 
                                               left_on='egid', right_on='flat_id', how='left')
     flats_subset_with_rcp.drop(columns=['buffer', 'flat_id'], inplace=True)
-    flats_subset_with_rcp.to_file(OUTPUT_PATH)
-    logger.info("Mapped closest RCPs and saved shapefile.")
+    flats_subset_with_rcp.to_file(OUTPUT_PATH, driver='gpkg')
+    logger.info("Mapped closest RCPs and saved output")
     logger.info("Process completed.")
     elapsed_time = time.perf_counter() - start_time
     minutes, seconds = divmod(elapsed_time, 60)
