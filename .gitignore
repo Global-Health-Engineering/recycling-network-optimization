@@ -4,10 +4,10 @@ __pycache__/
 .Rproj.user
 /data
 *.log
-.vscode
 test.ipynb
 .snakemake
 *.rdata
 *.Rproj
 *.hmtl
 test.ipynb
+/.vscode
