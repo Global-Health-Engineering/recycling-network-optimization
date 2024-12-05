@@ -12,7 +12,7 @@ rule all:
     input:
         DERIVED_DATA + "/isochores_5min.gpkg",
         # DERIVED_DATA + "/isochores_10min.gpkg",
-        # DERIVED_DATA + "/flats_subset_with_rcp.shp",
+        DERIVED_DATA + "/flats_subset_with_rcp.shp",
         DERIVED_DATA + "/distance_matrix.csv"
 
 rule population_allocation:
@@ -57,9 +57,9 @@ rule calculate_distances_to_rcp:
         flats=DERIVED_DATA + "/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        DERIVED_DATA + "/flats_subset_with_rcp.shp"
+        DERIVED_DATA + "/flats_subset_with_rcp.gpkg"
     params:
-        n=1, # Number of nearest recycling points
+        n=100, # Number of nearest recycling points
         buffer_distance=500
     log:
         "logs/distance_calc.log"
