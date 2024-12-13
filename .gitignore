@@ -11,3 +11,4 @@ test.ipynb
 *.hmtl
 test.ipynb
 /.vscode
+python/.vscode/extensions.json
