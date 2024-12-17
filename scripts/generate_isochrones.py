@@ -5,6 +5,8 @@ import sys
 import os
 from shapely.geometry import shape
 from snakemake.logging import logger
+from shapely.ops import unary_union
+import pandas as pd
 
 # Obtain paths from snakemake
 INPUT_FLATS = snakemake.input['flats']
@@ -12,6 +14,7 @@ INPUT_RCPS = snakemake.input['rcps']
 OUTPUT_GPKG_5 = snakemake.output['iso_5min']
 OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 OUTPUT_GPKG_all= snakemake.output['iso_all']
+OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 
 # Get API key from environment variable or snakemake params
 API_KEY = os.getenv("ORS_API_KEY")
@@ -130,4 +133,52 @@ if all_isochrones:
 else:
     logger.error("unexpected error")
 
+def merge_isochrones_preserve_time(isochrones_gdf):
+    """
+    Merge isochrones preserving lower time values.
 
+    Parameters:
+    - isochrones_gdf: GeoDataFrame with isochrones and 'time' attribute.
+
+    Returns:
+    - GeoDataFrame with merged isochrones.
+    """
+    # Ensure CRS is EPSG:4326
+    if isochrones_gdf.crs != "EPSG:4326":
+        isochrones_gdf = isochrones_gdf.to_crs(epsg=4326)
+
+    # Sort isochrones by 'time' ascending
+    isochrones_sorted = isochrones_gdf.sort_values(by='time')
+
+    merged_isochrones = gpd.GeoDataFrame(columns=isochrones_sorted.columns, crs="EPSG:4326")
+
+    # Initialize an empty geometry for subtraction
+    accumulated_geom = None
+
+    for _, row in isochrones_sorted.iterrows():
+        current_geom = row.geometry
+        current_time = row['time']
+
+        if accumulated_geom:
+            remaining_geom = current_geom.difference(accumulated_geom)
+        else:
+            remaining_geom = current_geom
+
+        if not remaining_geom.is_empty:
+            new_row = row.copy()
+            new_row.geometry = remaining_geom
+            # Ensure the new_row GeoDataFrame has the correct CRS
+            new_row = gpd.GeoDataFrame([new_row], crs="EPSG:4326")
+            merged_isochrones = pd.concat([merged_isochrones, new_row], ignore_index=True)
+            # Update accumulated geometry
+            if accumulated_geom:
+                accumulated_geom = unary_union([accumulated_geom, remaining_geom])
+            else:
+        logger.info(f"Processed isochrone with time {current_time} minutes.")
+        print(f"Processed isochrone with time {current_time} minutes.")
+
+    return merged_isochrones
+
+# Merge isochrones
+merged_isochrones_gdf = merge_isochrones_preserve_time(all_isochrones_gdf)
+merged_isochrones_gdf.to_file(OUTPUT_GPKG_merged, driver="GPKG")
