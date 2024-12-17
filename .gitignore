@@ -9,6 +9,7 @@ test.ipynb
 *.rdata
 *.Rproj
 *.hmtl
+*.png
 test.ipynb
 /.vscode
 python/.vscode/extensions.json
