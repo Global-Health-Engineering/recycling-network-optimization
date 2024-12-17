@@ -11,6 +11,7 @@ INPUT_FLATS = snakemake.input['flats']
 INPUT_RCPS = snakemake.input['rcps']
 OUTPUT_GPKG_5 = snakemake.output['iso_5min']
 OUTPUT_GPKG_10 = snakemake.output['iso_10min']
+OUTPUT_GPKG_all= snakemake.output['iso_all']
 
 # Get API key from environment variable or snakemake params
 API_KEY = os.getenv("ORS_API_KEY")
@@ -104,3 +105,27 @@ try:
 except Exception as e:
     logger.critical(f"An unexpected error occurred: {e}")
     sys.exit(1)
+
+# generate 1-10 min isochrones without population estimation
+all_isochrones = []
+
+times = [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
+
+for time in times:
+    for _, row in rcps.iterrows():
+        isochrone = generate_isochrones(client, [row.geometry.x, row.geometry.y], time)
+        if isochrone is not None:
+            all_isochrones.extend([
+                {
+                    'geometry': shape(feature['geometry']),
+                    'poi_id': row['poi_id'],
+                    'time': time
+                }
+                for feature in isochrone['features']
+            ])
+
+all_isochrones_gdf = gpd.GeoDataFrame(all_isochrones, crs="EPSG:4326")
+
+all_isochrones_gdf.to_file(OUTPUT_GPKG_all, driver="GPKG")
+
+
