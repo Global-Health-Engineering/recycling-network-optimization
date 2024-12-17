@@ -10,8 +10,9 @@ PLOTS_PATH = "/home/silas/projects/msc_thesis/docs/reports/thesis/figures"
 
 rule all:
     input:
-        DERIVED_DATA + "/isochores_5min.gpkg",
-        # DERIVED_DATA + "/isochores_10min.gpkg",
+        DERIVED_DATA + "/isochrones_5min.gpkg",
+        DERIVED_DATA + "/isochrones_10min.gpkg",
+        DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/flats_subset_with_rcp.gpkg",
         DERIVED_DATA + "/distance_matrix.csv"
 
@@ -32,13 +33,14 @@ rule generate_isochrones:
         flats=DERIVED_DATA + "/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        iso_5min=DERIVED_DATA + "/isochores_5min.gpkg",
-        iso_10min=DERIVED_DATA + "/isochores_10min.gpkg"
+        iso_5min=DERIVED_DATA + "/isochrones_5min.gpkg",
+        iso_10min=DERIVED_DATA + "/isochrones_10min.gpkg",
+        iso_all=DERIVED_DATA + "/isochrones_all.gpkg"
     log:
         "logs/isochores_calculations.log"
     conda: "envs/geo_env.yaml"
     script:
-        "scripts/isochores_calculations.py"
+        "scripts/generate_isochrones.py"
 
 rule calculate_distance_matrix:
     input:
