@@ -66,7 +66,6 @@ def count_flats_in_isochrones(flats, gdf):
     except Exception as e:
         logger.error(f"An error occurred while counting flats in isochrones: {e}")
 
-
 def generate_and_save_isochrones(client, rcps, time_limit, output_path):
     iso = []
     for _, row in rcps.iterrows():
@@ -174,8 +173,7 @@ def merge_isochrones_preserve_time(isochrones_gdf):
             if accumulated_geom:
                 accumulated_geom = unary_union([accumulated_geom, remaining_geom])
             else:
-        logger.info(f"Processed isochrone with time {current_time} minutes.")
-        print(f"Processed isochrone with time {current_time} minutes.")
+                logger.info(f"Processed isochrone with time {current_time} minutes.")
 
     return merged_isochrones
 
