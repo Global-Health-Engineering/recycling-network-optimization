@@ -92,28 +92,6 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, client, radi
                 return rcp_ids[idx], round(duration, 2)
     return None, None
 
-# Function to prepare heatmap data
-merged_isochrones_gdf.to_crs(epsg=4326, inplace=True)
-def prepare_heatmap_data(merged_isochrones_gdf):
-    """
-    Prepare heatmap data from merged isochrones.
-
-    Parameters:
-    - merged_isochrones_gdf: GeoDataFrame with merged isochrones.
-
-    Returns:
-    - List of [latitude, longitude, intensity] for HeatMap.
-    """
-    heat_data = []
-    for _, row in merged_isochrones_gdf.iterrows():
-        if 'time' not in row:
-            print("Missing 'time' column in merged_isochrones_gdf")
-            continue
-        centroid = row.geometry.centroid
-        lat, lon = centroid.y, centroid.x
-        intensity = row['time'] / 60  # Convert time to minutes for intensity
-        heat_data.append([lat, lon, intensity])
-    return heat_data
 
 if __name__ == "__main__":
     def main():
