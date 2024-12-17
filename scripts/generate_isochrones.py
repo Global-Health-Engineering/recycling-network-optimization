@@ -123,9 +123,11 @@ for time in times:
                 }
                 for feature in isochrone['features']
             ])
-
-all_isochrones_gdf = gpd.GeoDataFrame(all_isochrones, crs="EPSG:4326")
-
-all_isochrones_gdf.to_file(OUTPUT_GPKG_all, driver="GPKG")
+if all_isochrones:
+    all_isochrones_gdf = gpd.GeoDataFrame(all_isochrones, crs="EPSG:4326")
+    all_isochrones_gdf.to_file(OUTPUT_GPKG_all, driver="GPKG")
+    logger.info("Generated all isochrones.")
+else:
+    logger.error("unexpected error")
 
 
