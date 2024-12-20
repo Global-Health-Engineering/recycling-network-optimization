@@ -16,12 +16,6 @@ OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 OUTPUT_GPKG_all= snakemake.output['iso_all']
 OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 
-# Get API key from environment variable or snakemake params
-API_KEY = os.getenv("ORS_API_KEY")
-if not API_KEY:
-    logger.error("OpenRouteService API key not found.")
-    sys.exit(1)
-
 TIME_LIMITS = [300, 600]  # in seconds
 n = 10  # number of recycling points to process
 
@@ -93,7 +87,7 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         logger.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
 
 try:
-    client = openrouteservice.Client(key=API_KEY)
+    client = openrouteservice.Client(base_url='http://localhost:8080/ors')
     rcps = gpd.read_file(INPUT_RCPS)
     logger.info("Imported datasets.")
     rcps = rcps.to_crs(epsg=4326)
