@@ -10,8 +10,8 @@ import sys
 start_time = time.perf_counter()
 
 # Remove hardcoded parameters and paths
-n = snakemake.params.n
 buffer_distance = snakemake.params.buffer_distance
+n = snakemake.params.n if hasattr(snakemake.params, 'n') else None
 
 FLATS_PATH = snakemake.input['flats']
 RCPS_PATH = snakemake.input['rcps']
