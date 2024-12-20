@@ -63,7 +63,7 @@ rule calculate_distances_to_rcp:
     output:
         DERIVED_DATA + "/flats_subset_with_rcp.gpkg"
     params:
-        n=30000, # Number of nearest recycling points
+        # n=30000, # Number of nearest recycling points
         buffer_distance=500
     log:
         "logs/distance_calc.log"
