@@ -12,10 +12,6 @@ start_time = time.perf_counter()
 # Remove hardcoded parameters and paths
 n = snakemake.params.n
 buffer_distance = snakemake.params.buffer_distance
-api_key = os.getenv("ORS_API_KEY")
-if not api_key:
-    logger.error("OpenRouteService API key not found.")
-    sys.exit(1)
 
 FLATS_PATH = snakemake.input['flats']
 RCPS_PATH = snakemake.input['rcps']
@@ -23,7 +19,7 @@ OUTPUT_PATH = snakemake.output[0]
 
 # Execute script
 try:
-    os.chdir("/home/silas/projects/msc_thesis")
+    os.chdir("/home/silas/rcp_project/rcp_project")
     logger.info("Changed working directory.")
 
     # Import datasets
@@ -55,7 +51,7 @@ try:
     logger.info("Mapped RCPs to flats within buffer.")
 
     # Initialize ORS client
-    client = openrouteservice.Client(key=api_key)
+    client = openrouteservice.Client(base_url='http://localhost:8080/ors')
     flats_subset = flats_subset.to_crs(epsg=4326)
     rcps = rcps.to_crs(epsg=4326)
     logger.info("Initialized OpenRouteService client and transformed CRS.")
