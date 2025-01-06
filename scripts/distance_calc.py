@@ -20,15 +20,22 @@ OUTPUT_PATH = snakemake.output[0]
 # import datasets
 flats_zh = gpd.read_file(FLATS_PATH)
 rcps = gpd.read_file(RCPS_PATH)
+
+# make sure crs matches
+flats_zh = flats_zh.to_crs("EPSG:4326")
+rcps = rcps.to_crs("EPSG:4326")
+
+# aggregate flats to buildings
+buildings_zh = flats_zh.groupby('egid').agg({'est_pop': 'sum', 'geometry': 'first'}).reset_index()
+
 # Initialize BallTree
 tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps)
 
 # Initialize ORS client
 client = ors.Client(base_url='http://localhost:8080/ors')
 
-# apply the find_nearest_rcp_duration function to each flat
-flats_zh['nearest_rcp_id'], flats_zh['duration'] = zip(*flats_zh['geometry'].apply(func=lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)))
-
+# apply the find_nearest_rcp_duration function to each building
+buildings_zh['nearest_rcp_id'], buildings_zh['duration'] = zip(*buildings_zh['geometry'].apply(lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)))
 
 # Save the output
-flats_zh.to_file(OUTPUT_PATH, driver='GPKG')
+buildings_zh.to_file(OUTPUT_PATH, driver='GPKG')
