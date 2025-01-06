@@ -37,5 +37,7 @@ client = ors.Client(base_url='http://localhost:8080/ors')
 # apply the find_nearest_rcp_duration function to each building
 buildings_zh['nearest_rcp_id'], buildings_zh['duration'] = zip(*buildings_zh['geometry'].apply(lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)))
 
+# convert to geoDataFrame
+buildings_zh = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:4326")
 # Save the output
 buildings_zh.to_file(OUTPUT_PATH, driver='GPKG')
