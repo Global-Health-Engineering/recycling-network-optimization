@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import os
 import openrouteservice
-import util
+import scripts.util as util
 
 def create_high_pop_unserved():
     """
