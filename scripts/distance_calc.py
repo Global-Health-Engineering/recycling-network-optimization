@@ -4,6 +4,7 @@ import pandas as pd
 import openrouteservice as ors
 import logging
 import time
+import numpy as np
 from snakemake.logging import logger
 import sys
 import scripts.util as util
@@ -39,5 +40,10 @@ buildings_zh['nearest_rcp_id'], buildings_zh['duration'] = zip(*buildings_zh['ge
 
 # convert to geoDataFrame
 buildings_zh = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:4326")
+
+# calculate impact measure
+buildings_zh['impact'] = buildings_zh['est_pop'] * buildings_zh['duration']
+buildings_zh['impact_log'] = np.log1p(buildings_zh['impact'])
+
 # Save the output
 buildings_zh.to_file(OUTPUT_PATH, driver='GPKG')
