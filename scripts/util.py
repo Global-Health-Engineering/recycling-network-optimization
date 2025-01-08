@@ -11,7 +11,7 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def initialize_ball_tree(rcps):
+def initialize_ball_tree(rcps, identifier_column='poi_id'):
     """
     Initialize a BallTree for RCP coordinates.
 
@@ -24,7 +24,7 @@ def initialize_ball_tree(rcps):
     - rcp_ids: List of RCP identifiers.
     """
     rcp_coords = rcps.geometry.apply(lambda geom: (geom.x, geom.y)).tolist()
-    rcp_ids = rcps['poi_id'].tolist()  # Replace 'poi_id' with your actual RCP identifier column
+    rcp_ids = rcps[identifier_column].tolist()
 
     # Convert coordinates to radians for BallTree ([lat, lon])
     rcp_coords_rad = np.radians([coord[::-1] for coord in rcp_coords])  # [lat, lon]
