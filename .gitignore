@@ -6,6 +6,8 @@ __pycache__/
 *.log
 test.ipynb
 .snakemake
+test.ipynb
+.snakemake
 *.rdata
 *.Rproj
 *.html
