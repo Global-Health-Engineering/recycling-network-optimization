@@ -92,6 +92,49 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, client, radi
                 return rcp_ids[idx], round(duration, 2)
     return None, None
 
+def merge_isochrones_preserve_time(isochrones_gdf):
+    """
+    Merge isochrones preserving lower time values.
+
+    Parameters:
+    - isochrones_gdf: GeoDataFrame with isochrones and 'time' attribute.
+
+    Returns:
+    - GeoDataFrame with merged isochrones.
+    """
+    # Ensure CRS is EPSG:4326
+    if isochrones_gdf.crs != "EPSG:4326":
+        isochrones_gdf = isochrones_gdf.to_crs(epsg=4326)
+
+    # Sort isochrones by 'time' ascending
+    isochrones_sorted = isochrones_gdf.sort_values(by='time')
+
+    merged_isochrones = gpd.GeoDataFrame(columns=isochrones_sorted.columns, crs="EPSG:4326")
+
+    # Initialize an empty geometry for subtraction
+    accumulated_geom = None
+
+    for _, row in isochrones_sorted.iterrows():
+        current_geom = row.geometry
+        current_time = row['time']
+
+        if accumulated_geom:
+            remaining_geom = current_geom.difference(accumulated_geom)
+        else:
+            remaining_geom = current_geom
+
+        if not remaining_geom.is_empty:
+            new_row = row.copy()
+            new_row.geometry = remaining_geom
+            # Ensure the new_row GeoDataFrame has the correct CRS
+            new_row = gpd.GeoDataFrame([new_row], crs="EPSG:4326")
+            merged_isochrones = pd.concat([merged_isochrones, new_row], ignore_index=True)
+            # Update accumulated geometry
+            if accumulated_geom:
+                accumulated_geom = unary_union([accumulated_geom, remaining_geom])
+            else:
+                accumulated_geom = remaining_geom
+    return merged_isochrones
 
 if __name__ == "__main__":
     def main():
