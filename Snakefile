@@ -15,7 +15,9 @@ rule all:
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/flats_duration.gpkg",
         DERIVED_DATA + "/distance_matrix.csv",
-        DERIVED_DATA + "/iso_merged.gpkg"
+        DERIVED_DATA + "/iso_merged.gpkg",
+        DERIVED_DATA + "/kmeans_clusters.gpkg",
+        PLOTS_PATH + "/kmeans_clusters.html"
 
 rule population_allocation:
     input:
@@ -71,3 +73,17 @@ rule calculate_distances_to_rcp:
         "envs/geo_env.yaml"
     script:
         "scripts/distance_calc.py"
+
+rule generate_demand_points:
+    input:
+        flats=DERIVED_DATA + "/flats_duration.gpkg",
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
+        html_map=PLOTS_PATH + "/kmeans_clusters.html"
+    params:
+        n_clusters=1200
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/demand_points.py"
