@@ -1,92 +1,49 @@
 import geopandas as gpd
 import os
 import pandas as pd
-import openrouteservice
+import openrouteservice as ors
 import logging
 import time
+import numpy as np
 from snakemake.logging import logger
 import sys
+import scripts.util as util
 
 start_time = time.perf_counter()
 
 # Remove hardcoded parameters and paths
-n = snakemake.params.n
 buffer_distance = snakemake.params.buffer_distance
-api_key = os.getenv("ORS_API_KEY")
-if not api_key:
-    logger.error("OpenRouteService API key not found.")
-    sys.exit(1)
-
+n = snakemake.params.n if hasattr(snakemake.params, 'n') else None
 FLATS_PATH = snakemake.input['flats']
 RCPS_PATH = snakemake.input['rcps']
 OUTPUT_PATH = snakemake.output[0]
 
-# Execute script
-try:
-    os.chdir("/home/silas/projects/msc_thesis")
-    logger.info("Changed working directory.")
+# import datasets
+flats_zh = gpd.read_file(FLATS_PATH)
+rcps = gpd.read_file(RCPS_PATH)
 
-    # Import datasets
-    flats_zh = gpd.read_file(FLATS_PATH)
-    rcps = gpd.read_file(RCPS_PATH)
-    logger.info("Imported datasets.")
+# make sure crs matches
+flats_zh = flats_zh.to_crs("EPSG:4326")
+rcps = rcps.to_crs("EPSG:4326")
 
-    # Filter data
-    flats_zh_existing = flats_zh.drop_duplicates(subset=['egid'])
-    flats_zh_existing['egid'] = flats_zh_existing['egid'].astype(int)
-    logger.info("Filtered existing flats.")
+# aggregate flats to buildings
+buildings_zh = flats_zh.groupby('egid').agg({'est_pop': 'sum', 'geometry': 'first'}).reset_index()
 
-    # Check CRS
-    logger.info(f"Flats CRS: {flats_zh_existing.crs}")
-    logger.info(f"RCPs CRS: {rcps.crs}")
+# Initialize BallTree
+tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps)
 
-    # Create subset and buffer
-    flats_subset = flats_zh_existing.iloc[1:n].copy()
-    flats_subset['buffer'] = flats_subset.geometry.buffer(buffer_distance)
-    logger.info("Created buffer around flats.")
+# Initialize ORS client
+client = ors.Client(base_url='http://localhost:8080/ors')
 
-    # Find points in buffer
-    results = pd.DataFrame(columns=['flat_id', 'rcp'])
-    for idx, row in flats_subset.iterrows():
-        points_in_buffer = rcps[rcps.geometry.within(row['buffer'])]
-        if not points_in_buffer.empty:
-            for point_idx in points_in_buffer.index:
-                results.loc[len(results)] = {'flat_id': row['egid'], 'rcp': point_idx}
-    logger.info("Mapped RCPs to flats within buffer.")
+# apply the find_nearest_rcp_duration function to each building
+buildings_zh['nearest_rcp_id'], buildings_zh['duration'] = zip(*buildings_zh['geometry'].apply(lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)))
 
-    # Initialize ORS client
-    client = openrouteservice.Client(key=api_key)
-    flats_subset = flats_subset.to_crs(epsg=4326)
-    rcps = rcps.to_crs(epsg=4326)
-    logger.info("Initialized OpenRouteService client and transformed CRS.")
+# convert to geoDataFrame
+buildings_zh = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:4326")
 
-    # Calculate routes
-    results['distance'] = 0.0
-    results['duration'] = 0.0
+# calculate impact measure
+buildings_zh['impact'] = buildings_zh['est_pop'] * buildings_zh['duration']
+buildings_zh['impact_log'] = np.log1p(buildings_zh['impact'])
 
-    for idx, row in results.iterrows():
-        flat_coords = flats_subset.loc[flats_subset['egid'] == row['flat_id'], 'geometry'].values[0]
-        rcp_coords = rcps.geometry[row['rcp']]
-        coords = ([flat_coords.x, flat_coords.y], [rcp_coords.x, rcp_coords.y])
-        route = client.directions(coordinates=coords, profile='foot-walking', format='geojson')
-        distance = route['features'][0]['properties']['segments'][0]['distance']
-        duration = route['features'][0]['properties']['segments'][0]['duration']
-        results.at[idx, 'distance'] = distance
-        results.at[idx, 'duration'] = duration / 60
-
-    logger.info("Calculated walking routes.")
-
-    # Map closest RCP
-    closest_rcp = results.loc[results.groupby('flat_id')['duration'].idxmin()]
-    flats_subset_with_rcp = flats_subset.merge(closest_rcp[['flat_id', 'rcp', 'distance', 'duration']], 
-                                              left_on='egid', right_on='flat_id', how='left')
-    flats_subset_with_rcp.drop(columns=['buffer', 'flat_id'], inplace=True)
-    flats_subset_with_rcp.to_file(OUTPUT_PATH, driver='gpkg')
-    logger.info("Mapped closest RCPs and saved output")
-    logger.info("Process completed.")
-    elapsed_time = time.perf_counter() - start_time
-    minutes, seconds = divmod(elapsed_time, 60)
-    logger.info(f"Elapsed time: {int(minutes)} minutes and {int(seconds)} seconds.")
-
-except Exception as e:
-    logger.error(f"An unexpected error occurred: {e}")
+# Save the output
+buildings_zh.to_file(OUTPUT_PATH, driver='GPKG')

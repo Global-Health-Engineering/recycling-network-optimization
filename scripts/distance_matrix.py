@@ -12,11 +12,7 @@ DEPOT_COORDS = [DUMP_COORDS, TRUCK_GARAGE_COORDS]
 
 def get_ors_client():
     """Initialize OpenRouteService client"""
-    api_key = os.getenv("ORS_API_KEY")
-    if not api_key:
-        logger.error("OpenRouteService API key not found.")
-        sys.exit(1)
-    return openrouteservice.Client(key=api_key)
+    return openrouteservice.Client(base_url='http://localhost:8080/ors')
 
 def calculate_distance_matrix(source_coords, depot_coords):
     """Calculate distance matrix between source coordinates and depot coordinates"""
@@ -55,7 +51,7 @@ def calculate_distance_matrix(source_coords, depot_coords):
 
 # Main execution
 try:
-    os.chdir("/home/silas/projects/msc_thesis")
+    os.chdir("/home/silas/rcp_project/rcp_project")
     logger.info("Changed working directory.")
     
     # Read and ensure CRS matches EPSG:4326

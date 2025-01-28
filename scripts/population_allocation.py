@@ -44,8 +44,8 @@ def allocate_population(flat_db_path, population_polygon_path, output_path):
         # Global average population per wazim
         avg_pop_per_wazim = est_pop.sum() / flats['wazim'].sum()
         logger.info(f"Average population per wazim: {avg_pop_per_wazim}")
-        # Replace NaN values with the average population per wazim
-        est_pop[np.isnan(est_pop)] = avg_pop_per_wazim * flats['wazim'][np.isnan(est_pop)]
+        # Replace NaN and 0 values with the average population per wazim
+        est_pop[(np.isnan(est_pop)) | (est_pop == 0)] = avg_pop_per_wazim * flats['wazim'][(np.isnan(est_pop)) | (est_pop == 0)]
 
         flats['est_pop'] = est_pop
         logger.info("Population allocation completed.")

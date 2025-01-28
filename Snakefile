@@ -1,9 +1,9 @@
 # Snakefile
 
 # Data paths
-RAW_DATA = "/home/silas/projects/msc_thesis/data/raw_data"
-DERIVED_DATA = "/home/silas/projects/msc_thesis/data/derived_data"
-PLOTS_PATH = "/home/silas/projects/msc_thesis/docs/reports/thesis/figures"
+RAW_DATA = "/home/silas/rcp_project/rcp_project/data/raw_data"
+DERIVED_DATA = "/home/silas/rcp_project/rcp_project/data/derived_data"
+PLOTS_PATH = "/home/silas/rcp_project/rcp_project/data/plots"
 
 # Configuration
 #configfile: "config.yaml"
@@ -13,8 +13,11 @@ rule all:
         DERIVED_DATA + "/isochrones_5min.gpkg",
         DERIVED_DATA + "/isochrones_10min.gpkg",
         DERIVED_DATA + "/isochrones_all.gpkg",
-        DERIVED_DATA + "/flats_subset_with_rcp.gpkg",
-        DERIVED_DATA + "/distance_matrix.csv"
+        DERIVED_DATA + "/flats_duration.gpkg",
+        DERIVED_DATA + "/distance_matrix.csv",
+        DERIVED_DATA + "/iso_merged.gpkg",
+        DERIVED_DATA + "/kmeans_clusters.gpkg",
+        PLOTS_PATH + "/kmeans_clusters.html"
 
 rule population_allocation:
     input:
@@ -35,7 +38,8 @@ rule generate_isochrones:
     output:
         iso_5min=DERIVED_DATA + "/isochrones_5min.gpkg",
         iso_10min=DERIVED_DATA + "/isochrones_10min.gpkg",
-        iso_all=DERIVED_DATA + "/isochrones_all.gpkg"
+        iso_all=DERIVED_DATA + "/isochrones_all.gpkg",
+        iso_merged=DERIVED_DATA + "/iso_merged.gpkg"
     log:
         "logs/isochores_calculations.log"
     conda: "envs/geo_env.yaml"
@@ -59,9 +63,9 @@ rule calculate_distances_to_rcp:
         flats=DERIVED_DATA + "/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        DERIVED_DATA + "/flats_subset_with_rcp.gpkg"
+        DERIVED_DATA + "/flats_duration.gpkg"
     params:
-        n=100, # Number of nearest recycling points
+        # n=30000, # Number of nearest recycling points
         buffer_distance=500
     log:
         "logs/distance_calc.log"
@@ -69,3 +73,17 @@ rule calculate_distances_to_rcp:
         "envs/geo_env.yaml"
     script:
         "scripts/distance_calc.py"
+
+rule generate_demand_points:
+    input:
+        flats=DERIVED_DATA + "/flats_duration.gpkg",
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
+        html_map=PLOTS_PATH + "/kmeans_clusters.html"
+    params:
+        n_clusters=1200
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/demand_points.py"
