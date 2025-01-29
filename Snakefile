@@ -14,10 +14,11 @@ rule all:
         DERIVED_DATA + "/isochrones_10min.gpkg",
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/flats_duration.gpkg",
-        DERIVED_DATA + "/distance_matrix.csv",
         DERIVED_DATA + "/iso_merged.gpkg",
         DERIVED_DATA + "/kmeans_clusters.gpkg",
-        PLOTS_PATH + "/kmeans_clusters.html"
+        PLOTS_PATH + "/kmeans_clusters.html",
+        DERIVED_DATA + "/distance_matrix_trucks.csv",
+        DERIVED_DATA + "/distance_matrix_walking.csv"
 
 rule population_allocation:
     input:
@@ -46,11 +47,14 @@ rule generate_isochrones:
     script:
         "scripts/generate_isochrones.py"
 
-rule calculate_distance_matrix:
+rule calculate_distance_matrices:
     input:
-        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
+        potential_locations=DERIVED_DATA + "/suitable_locations.gpkg",
+        demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg"
     output:
-        DERIVED_DATA + "/distance_matrix.csv"
+        matrix_trucks=DERIVED_DATA + "/distance_matrix_trucks.csv",
+        matric_walking=DERIVED_DATA + "/distance_matrix_walking.csv"
     log:
         "logs/distance_matrix.log"
     conda:
