@@ -9,7 +9,8 @@ dependencies:
   - shapely>=2.0.0
   - folium
   - snakemake
-  - numpy
+  - rasterstats
+  - numpy==1.24.3
   - pip
   - pip:
     - openrouteservice

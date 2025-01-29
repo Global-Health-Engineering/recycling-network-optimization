@@ -1,0 +1,10 @@
+name: snake_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - snakemake=8.4.0
+  - mamba
+  - conda-lock
