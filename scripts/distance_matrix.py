@@ -14,10 +14,13 @@ DEPOT_COORDS = [DUMP_COORDS, TRUCK_GARAGE_COORDS]
 potential_locations = snakemake.input.potential_locations
 demand_points = snakemake.input.demand_points
 
-# Read and ensure CRS matches EPSG:4326
+# Read datasets
 potential_locations_gdf = gpd.read_file(potential_locations)
 demand_points_gdf = gpd.read_file(demand_points)
-
+# Ensure demand_points is a GeoDataFrame
+if isinstance(demand_points, gpd.GeoSeries):
+    demand_points = demand_points.to_frame().reset_index(drop=True)
+# Ensure CRS is EPSG:4326
 if potential_locations_gdf.crs != "EPSG:4326":
     potential_locations_gdf = potential_locations_gdf.to_crs("EPSG:4326")
     logger.info("Converted potential_locations CRS to EPSG:4326.")
@@ -65,20 +68,27 @@ def calculate_distance_matrix(source_coords, depot_coords):
         logger.error(f"Error calculating distance matrix: {e}")
         return None
 
-def calculate_walking_distance_matrix(potential_locations, demand_points):
-    """Calculate walking duration matrix between potential locations and demand points"""
+def calculate_walking_distance_matrix(potential_locations_gdf, demand_points_gdf):
+    """Calculate walking duration matrix between potential locations and demand points GeoDataFrames"""
     try:
-        walking_durations = []
-        for loc in potential_locations:
-            for dp in demand_points:
+        data = []
+        for i, loc_row in potential_locations_gdf.iterrows():
+            loc = loc_row.geometry.centroid  # Get centroid of location geometry
+            for j, dp_row in demand_points_gdf.iterrows():
+                dp = dp_row.geometry  # Get demand point geometry
                 response = client.directions(
                     coordinates=[[loc.x, loc.y], [dp.x, dp.y]],
                     profile='foot-walking',
                     format='geojson'
                 )
                 duration = response['features'][0]['properties']['segments'][0]['duration']
-                walking_durations.append(duration)
-        walking_df = pd.DataFrame(walking_durations, columns=['Walking_Duration'])
+                data.append({
+                    'Location_ID': i,
+                    'Object_ID': loc_row['object_id'],
+                    'Demand_Point_ID': j,
+                    'Walking_Duration': duration
+                })
+        walking_df = pd.DataFrame(data)
         return walking_df
     except Exception as e:
         logger.error(f"Error calculating walking duration matrix: {e}")
@@ -108,11 +118,18 @@ try:
     else:
         logger.error("Failed to calculate distance matrix.")
     
+    # Constants for testing - adjust subset size as needed
+    TEST_SUBSET_SIZE = 5  # Number of locations to process during testing
+
     # Calculate and save walking distance matrix
-    walking_matrix = calculate_walking_distance_matrix(potential_locations_gdf.geometry.centroid, demand_points_gdf.geometry)
+    # Use head() to subset the data for testing
+    walking_matrix = calculate_walking_distance_matrix(
+        potential_locations_gdf.head(TEST_SUBSET_SIZE),
+        demand_points_gdf.head(TEST_SUBSET_SIZE)
+    )
     if walking_matrix is not None:
         walking_matrix.to_csv(snakemake.output.matrix_walking, index=False)
-        logger.info("Calculated and saved walking distance matrix.")
+        logger.info(f"Calculated and saved walking distance matrix (using {TEST_SUBSET_SIZE} test locations).")
     else:
         logger.error("Failed to calculate walking distance matrix.")
 finally:
