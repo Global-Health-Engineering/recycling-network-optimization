@@ -83,10 +83,9 @@ def calculate_walking_distance_matrix(potential_locations_gdf, demand_points_gdf
                 )
                 duration = response['features'][0]['properties']['segments'][0]['duration']
                 data.append({
-                    'Location_ID': i,
                     'Object_ID': loc_row['object_id'],
                     'Demand_Point_ID': j,
-                    'Walking_Duration': duration
+                    'Walking_Duration': duration/60  # Convert seconds to minutes
                 })
         walking_df = pd.DataFrame(data)
         return walking_df
