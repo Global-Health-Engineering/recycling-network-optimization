@@ -54,7 +54,7 @@ rule calculate_distance_matrices:
         demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg"
     output:
         matrix_trucks=DERIVED_DATA + "/distance_matrix_trucks.csv",
-        matric_walking=DERIVED_DATA + "/distance_matrix_walking.csv"
+        matrix_walking=DERIVED_DATA + "/distance_matrix_walking.csv"
     log:
         "logs/distance_matrix.log"
     conda:
