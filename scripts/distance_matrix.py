@@ -117,18 +117,19 @@ try:
     else:
         logger.error("Failed to calculate distance matrix.")
     
-    # Constants for testing - adjust subset size as needed
-    TEST_SUBSET_SIZE = 5  # Number of locations to process during testing
+    # Constants for testing - None means process entire dataset
+    TEST_SUBSET_SIZE = None  # Number of locations to process during testing
 
     # Calculate and save walking distance matrix
-    # Use head() to subset the data for testing
-    walking_matrix = calculate_walking_distance_matrix(
-        potential_locations_gdf.head(TEST_SUBSET_SIZE),
-        demand_points_gdf.head(TEST_SUBSET_SIZE)
-    )
+    # Use subset if TEST_SUBSET_SIZE is specified
+    potential_locs = potential_locations_gdf.head(TEST_SUBSET_SIZE) if TEST_SUBSET_SIZE else potential_locations_gdf
+    demand_pts = demand_points_gdf.head(TEST_SUBSET_SIZE) if TEST_SUBSET_SIZE else demand_points_gdf
+    
+    walking_matrix = calculate_walking_distance_matrix(potential_locs, demand_pts)
     if walking_matrix is not None:
         walking_matrix.to_csv(snakemake.output.matrix_walking, index=False)
-        logger.info(f"Calculated and saved walking distance matrix (using {TEST_SUBSET_SIZE} test locations).")
+        subset_msg = f" (using {TEST_SUBSET_SIZE} test locations)" if TEST_SUBSET_SIZE else ""
+        logger.info(f"Calculated and saved walking distance matrix{subset_msg}.")
     else:
         logger.error("Failed to calculate walking distance matrix.")
 finally:
