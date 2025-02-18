@@ -17,6 +17,11 @@ demand_points = snakemake.input.demand_points
 potential_locations_gdf = gpd.read_file(potential_locations)
 demand_points_gdf = gpd.read_file(demand_points)
 
+# make sure the CRS is EPSG:4326
+potential_locations_gdf = potential_locations_gdf.to_crs("EPSG:4326")
+demand_points_gdf = demand_points_gdf.to_crs("EPSG:4326")
+
+
 def get_ors_client():
     """Initialize OpenRouteService client"""
     return openrouteservice.Client(base_url='http://localhost:8080/ors')
@@ -80,13 +85,7 @@ def calculate_walking_distance_matrix(potential_locations, demand_points):
 try:
     os.chdir("/home/silas/rcp_project/rcp_project")
     logger.info("Changed working directory.")
-    
-    # Read and ensure CRS matches EPSG:4326
-    gdf = gpd.read_file(snakemake.input[0])
-    if gdf.crs != "EPSG:4326":
-        gdf = gdf.to_crs("EPSG:4326")
-        logger.info("Converted CRS to EPSG:4326.")
-    
+   # Get source coordinates 
     source_coords = gdf.geometry.tolist()
     
     # Initialize client
@@ -98,10 +97,10 @@ try:
         matrix.to_csv(snakemake.output.matrix_trucks, index=False)
         logger.info("Calculated and saved truck distance matrix.")
     else:
-        logger.error("Failed to calculate distance matrix.")
+        logger.error("Failed to calculate truck distance matrix.")
     
     # Calculate and save walking distance matrix
-    walking_matrix = calculate_walking_distance_matrix(potential_locations_gdf.geometry.centroid, demand_points_gdf.geometry)
+    walking_matrix = calculate_walking_distance_matrix(potential_locations_gdf.geometry, demand_points_gdf.geometry)
     if walking_matrix is not None:
         walking_matrix.to_csv(snakemake.output.matrix_walking, index=False)
         logger.info("Calculated and saved walking distance matrix.")
