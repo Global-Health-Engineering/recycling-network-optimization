@@ -10,12 +10,9 @@ DUMP_COORDS = [8.512281878574365, 47.38447647508825]  # [longitude, latitude]
 TRUCK_GARAGE_COORDS = [8.575500, 47.414889]  # [longitude, latitude]
 DEPOT_COORDS = [DUMP_COORDS, TRUCK_GARAGE_COORDS]
 
-# Datasets
-potential_locations = snakemake.input.potential_locations
-demand_points = snakemake.input.demand_points
-
-potential_locations_gdf = gpd.read_file(potential_locations)
-demand_points_gdf = gpd.read_file(demand_points)
+# Read GeoDataFrames
+potential_locations_gdf = gpd.read_file(snakemake.input.potential_locations)
+demand_points_gdf = gpd.read_file(snakemake.input.demand_points)
 
 # make sure the CRS is EPSG:4326
 potential_locations_gdf = potential_locations_gdf.to_crs("EPSG:4326")
@@ -83,10 +80,9 @@ def calculate_walking_distance_matrix(potential_locations, demand_points):
 
 # Main execution
 try:
-    os.chdir("/home/silas/rcp_project/rcp_project")
-    logger.info("Changed working directory.")
-   # Get source coordinates 
-    source_coords = gdf.geometry.tolist()
+
+    # Get source coordinates 
+    source_coords = potential_locations_gdf.geometry.tolist()
     
     # Initialize client
     client = get_ors_client()
