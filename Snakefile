@@ -50,7 +50,7 @@ rule generate_isochrones:
 rule calculate_distance_matrices:
     input:
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
-        potential_locations=DERIVED_DATA + "/suitable_locations.gpkg",
+        potential_locations=DERIVED_DATA + "/all_pot_sites.gpkg",
         demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg"
     output:
         matrix_trucks=DERIVED_DATA + "/distance_matrix_trucks.csv",
