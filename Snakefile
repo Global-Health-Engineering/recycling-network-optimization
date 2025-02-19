@@ -64,13 +64,14 @@ rule calculate_distance_matrices:
 
 rule calculate_distances_to_rcp:
     input:
-        flats=DERIVED_DATA + "/flats_population.gpkg",
-        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+        flats = DERIVED_DATA + "/flats_population.gpkg",
+        rcps1 = RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view1.shp",
+        rcps2 = DERIVED_DATA+ "rcps_clustering_ors.gpkg",
+        rcps3 = DERIVED_DATA + "/rcps_clustering_iso.gpkg" 
     output:
-        DERIVED_DATA + "/flats_duration.gpkg"
-    params:
-        # n=30000, # Number of nearest recycling points
-        buffer_distance=500
+        DERIVED_DATA + "/flats_duration_current.gpkg",
+        DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
+        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
     log:
         "logs/distance_calc.log"
     conda:
