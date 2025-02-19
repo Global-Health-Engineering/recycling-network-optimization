@@ -1,12 +1,7 @@
 import geopandas as gpd
-import os
-import pandas as pd
 import openrouteservice as ors
-import logging
 import time
 import numpy as np
-from snakemake.logging import logger
-import sys
 import scripts.util as util
 
 start_time = time.perf_counter()
