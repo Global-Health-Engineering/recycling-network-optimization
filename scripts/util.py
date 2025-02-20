@@ -11,7 +11,7 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def initialize_ball_tree(rcps, identifier_column='poi_id'):
+def initialize_ball_tree(rcps, identifier_column):
     """
     Initialize a BallTree for RCP coordinates.
 
