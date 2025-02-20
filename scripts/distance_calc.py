@@ -5,9 +5,6 @@ import numpy as np
 import scripts.util as util
 
 start_time = time.perf_counter()
-
-# Use buffer_distance from snakemake and flats input stays same
-buffer_distance = snakemake.params.buffer_distance
 FLATS_PATH = snakemake.input['flats']
 
 # Read flats dataset and aggregate to buildings
@@ -25,7 +22,9 @@ for i, key in enumerate(rcp_keys):
     rcps = rcps.to_crs("EPSG:4326")
 
     # Initialize BallTree for current rcps and ORS client
-    tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps)
+    id_column = 'poi_id' if key == 'rcps1' else 'id'
+    tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, id_column)
+
     client = ors.Client(base_url='http://localhost:8080/ors')
 
     # Copy the aggregated buildings and compute nearest rcp duration
