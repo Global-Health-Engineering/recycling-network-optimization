@@ -92,7 +92,7 @@ rule generate_demand_points:
         gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
         html_map=PLOTS_PATH + "/kmeans_clusters.html"
     params:
-        n_clusters=2000
+        n_clusters=3000
     conda:
         "envs/geo_env.yaml"
     script:
