@@ -17,7 +17,7 @@ rule all:
         DERIVED_DATA + "/kmeans_clusters.gpkg",
         PLOTS_PATH + "/kmeans_clusters.html",
         DERIVED_DATA + "/distance_matrix_trucks.csv",
-        DERIVED_DATA + "/distance_matrix_walking.csv"
+        DERIVED_DATA + "/distance_matrix_walking.csv",
         DERIVED_DATA + "/flats_duration_current.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
@@ -68,8 +68,8 @@ rule calculate_distance_matrices:
 rule calculate_distances_to_rcp:
     input:
         flats = DERIVED_DATA + "/flats_population.gpkg",
-        rcps1 = RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view1.shp",
-        rcps2 = DERIVED_DATA+ "rcps_clustering_ors.gpkg",
+        rcps1 = RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
+        rcps2 = DERIVED_DATA+ "/rcps_clustering_ors.gpkg",
         rcps3 = DERIVED_DATA + "/rcps_clustering_iso.gpkg" 
         #rcps4 = DERIVED_DATA + "/rcps_optimisation_1.gpkg"
     output:
@@ -97,3 +97,4 @@ rule generate_demand_points:
         "envs/geo_env.yaml"
     script:
         "scripts/demand_points.py"
+        #DERIVED_DATA + "/flats_duration_optimisation_1.gpkg"
