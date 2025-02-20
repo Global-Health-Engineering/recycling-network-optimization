@@ -10,24 +10,22 @@ DUMP_COORDS = [8.512281878574365, 47.38447647508825]  # [longitude, latitude]
 TRUCK_GARAGE_COORDS = [8.575500, 47.414889]  # [longitude, latitude]
 DEPOT_COORDS = [DUMP_COORDS, TRUCK_GARAGE_COORDS]
 
-# Datasets
-potential_locations = snakemake.input.potential_locations
-demand_points = snakemake.input.demand_points
+# Read GeoDataFrames
+potential_locations_gdf = gpd.read_file(snakemake.input.potential_locations)
+if not isinstance(potential_locations_gdf, gpd.GeoDataFrame):
+    potential_locations_gdf = gpd.GeoDataFrame(
+        potential_locations_gdf, geometry=potential_locations_gdf.geometry
+    )
 
-# Read datasets
-potential_locations_gdf = gpd.read_file(potential_locations)
-demand_points_gdf = gpd.read_file(demand_points)
-# Ensure demand_points is a GeoDataFrame
-if isinstance(demand_points, gpd.GeoSeries):
-    demand_points = demand_points.to_frame().reset_index(drop=True)
-# Ensure CRS is EPSG:4326
-if potential_locations_gdf.crs != "EPSG:4326":
-    potential_locations_gdf = potential_locations_gdf.to_crs("EPSG:4326")
-    logger.info("Converted potential_locations CRS to EPSG:4326.")
+demand_points_gdf = gpd.read_file(snakemake.input.demand_points)
+if not isinstance(demand_points_gdf, gpd.GeoDataFrame):
+    demand_points_gdf = gpd.GeoDataFrame(
+        demand_points_gdf, geometry=demand_points_gdf.geometry
+    )
 
-if demand_points_gdf.crs != "EPSG:4326":
-    demand_points_gdf = demand_points_gdf.to_crs("EPSG:4326")
-    logger.info("Converted demand_points CRS to EPSG:4326.")
+# Make sure the CRS is EPSG:4326
+potential_locations_gdf = potential_locations_gdf.to_crs("EPSG:4326")
+demand_points_gdf = demand_points_gdf.to_crs("EPSG:4326")
 
 def get_ors_client():
     """Initialize OpenRouteService client"""
@@ -68,24 +66,30 @@ def calculate_distance_matrix(source_coords, depot_coords):
         logger.error(f"Error calculating distance matrix: {e}")
         return None
 
-def calculate_walking_distance_matrix(potential_locations_gdf, demand_points_gdf):
-    """Calculate walking duration matrix between potential locations and demand points GeoDataFrames"""
+def calculate_walking_distance_matrix(potential_locations, demand_points):
+    """Calculate walking duration matrix between potential locations and demand points.
+    
+    The returned DataFrame includes:
+      - ID from potential_locations,
+      - cluster_ID from demand_points,
+      - Walking_Duration_Minutes for each pair.
+    """
     try:
         data = []
-        for i, loc_row in potential_locations_gdf.iterrows():
-            loc = loc_row.geometry.centroid  # Get centroid of location geometry
-            for j, dp_row in demand_points_gdf.iterrows():
-                dp = dp_row.geometry  # Get demand point geometry
+        # Iterate over full GeoDataFrames to have access to attributes and geometry.
+        for _, loc in potential_locations.iterrows():
+            for _, dp in demand_points.iterrows():
                 response = client.directions(
-                    coordinates=[[loc.x, loc.y], [dp.x, dp.y]],
+                    coordinates=[[loc.geometry.x, loc.geometry.y], [dp.geometry.x, dp.geometry.y]],
                     profile='foot-walking',
                     format='geojson'
                 )
                 duration = response['features'][0]['properties']['segments'][0]['duration']
+                duration_minutes = duration / 60  # Convert seconds to minutes
                 data.append({
-                    'Object_ID': loc_row['object_id'],
-                    'Demand_Point_ID': j,
-                    'Walking_Duration': duration/60  # Convert seconds to minutes
+                    'ID': loc['ID'],
+                    'cluster_ID': dp['cluster_id'],
+                    'Walking_Duration_Minutes': duration_minutes
                 })
         walking_df = pd.DataFrame(data)
         return walking_df
@@ -95,16 +99,8 @@ def calculate_walking_distance_matrix(potential_locations_gdf, demand_points_gdf
 
 # Main execution
 try:
-    os.chdir("/home/silas/rcp_project/rcp_project")
-    logger.info("Changed working directory.")
-    
-    # Read and ensure CRS matches EPSG:4326
-    gdf = gpd.read_file(snakemake.input[0])
-    if gdf.crs != "EPSG:4326":
-        gdf = gdf.to_crs("EPSG:4326")
-        logger.info("Converted CRS to EPSG:4326.")
-    
-    source_coords = gdf.geometry.tolist()
+    # Get source coordinates 
+    source_coords = potential_locations_gdf.geometry.tolist()
     
     # Initialize client
     client = get_ors_client()
@@ -115,21 +111,13 @@ try:
         matrix.to_csv(snakemake.output.matrix_trucks, index=False)
         logger.info("Calculated and saved truck distance matrix.")
     else:
-        logger.error("Failed to calculate distance matrix.")
+        logger.error("Failed to calculate truck distance matrix.")
     
-    # Constants for testing - None means process entire dataset
-    TEST_SUBSET_SIZE = None  # Number of locations to process during testing
-
     # Calculate and save walking distance matrix
-    # Use subset if TEST_SUBSET_SIZE is specified
-    potential_locs = potential_locations_gdf.head(TEST_SUBSET_SIZE) if TEST_SUBSET_SIZE else potential_locations_gdf
-    demand_pts = demand_points_gdf.head(TEST_SUBSET_SIZE) if TEST_SUBSET_SIZE else demand_points_gdf
-    
-    walking_matrix = calculate_walking_distance_matrix(potential_locs, demand_pts)
+    walking_matrix = calculate_walking_distance_matrix(potential_locations_gdf, demand_points_gdf)
     if walking_matrix is not None:
         walking_matrix.to_csv(snakemake.output.matrix_walking, index=False)
-        subset_msg = f" (using {TEST_SUBSET_SIZE} test locations)" if TEST_SUBSET_SIZE else ""
-        logger.info(f"Calculated and saved walking distance matrix{subset_msg}.")
+        logger.info("Calculated and saved walking distance matrix.")
     else:
         logger.error("Failed to calculate walking distance matrix.")
 finally:
