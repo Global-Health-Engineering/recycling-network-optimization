@@ -1,7 +1,5 @@
 import openrouteservice
-import os
 from snakemake.logging import logger
-import sys
 import geopandas as gpd
 import pandas as pd
 
