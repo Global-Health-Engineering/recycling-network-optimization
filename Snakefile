@@ -23,10 +23,13 @@ rule all:
         DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
         #DERIVED_DATA + "/flats_duration_optimisation_1.gpkg"
 
-rule population_allocation:
+rule allocate_population:
     input:
         flats=RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
         population=RAW_DATA + "/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp"
+    params:
+        flats_under_construction=True,
+        flats_in_planning=True
     output:
         DERIVED_DATA + "/flats_population.gpkg"
     log:
