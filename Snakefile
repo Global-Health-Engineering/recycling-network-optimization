@@ -101,4 +101,3 @@ rule generate_demand_points:
         "envs/geo_env.yaml"
     script:
         "scripts/demand_points.py"
-        #DERIVED_DATA + "/flats_duration_optimisation_1.gpkg"
