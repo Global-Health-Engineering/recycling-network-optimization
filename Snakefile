@@ -5,23 +5,26 @@ RAW_DATA = "/home/silas/rcp_project/rcp_project/data/raw_data"
 DERIVED_DATA = "/home/silas/rcp_project/rcp_project/data/derived_data"
 PLOTS_PATH = "/home/silas/rcp_project/rcp_project/data/plots"
 
+# Define the cluster numbers we want to generate
+CLUSTERS = [5000, 4000, 3000, 2500, 2000, 1500, 1000, 500]
+
 # Configuration
 #configfile: "config.yaml"
 
+# Update the all rule to include all cluster variants
 rule all:
     input:
         DERIVED_DATA + "/isochrones_5min.gpkg",
         DERIVED_DATA + "/isochrones_10min.gpkg",
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/iso_merged.gpkg",
-        DERIVED_DATA + "/kmeans_clusters.gpkg",
-        PLOTS_PATH +   "/kmeans_clusters.html",
+        expand(DERIVED_DATA + "/kmeans_clusters_{n}.gpkg", n=CLUSTERS),
+        expand(PLOTS_PATH + "/kmeans_clusters_{n}.html", n=CLUSTERS),
         DERIVED_DATA + "/distance_matrix_trucks.csv",
         DERIVED_DATA + "/distance_matrix_walking.csv",
         DERIVED_DATA + "/flats_duration_current.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
-        #DERIVED_DATA + "/flats_duration_optimisation_1.gpkg"
 
 rule allocate_population:
     input:
@@ -88,15 +91,16 @@ rule calculate_distances_to_rcp:
     script:
         "scripts/distance_calc.py"
 
+
 rule generate_demand_points:
     input:
         flats=DERIVED_DATA + "/flats_duration_current.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
-        html_map=PLOTS_PATH + "/kmeans_clusters.html"
+        gpkg=DERIVED_DATA + "/kmeans_clusters_{n_clusters}.gpkg",
+        html_map=PLOTS_PATH + "/kmeans_clusters_{n_clusters}.html"
     params:
-        n_clusters=200
+        n_clusters=lambda wildcards: int(wildcards.n_clusters)
     conda:
         "envs/geo_env.yaml"
     script:
