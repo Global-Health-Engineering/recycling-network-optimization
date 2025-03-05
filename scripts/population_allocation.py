@@ -45,7 +45,7 @@ def allocate_population(flat_db_path, population_polygon_path, output_path):
         status_filter = " or ".join([f'wstatlang == "{status}"' for status in status_categories])
         flats.query(status_filter, inplace=True)
 
-        # allocate population to flats based on wazim
+        # exclusde existing flats which are going to be demolished
         if snakemake.params.get('flats_in_planning', False):
             planned_flats = flats[flats["wstatlang"] == "Bewilligt"]
             if not planned_flats.empty:
@@ -54,14 +54,6 @@ def allocate_population(flat_db_path, population_polygon_path, output_path):
                 existing_flats = flats[flats["wstatlang"] == "Bestehend"]
                 join_df = gpd.sjoin(existing_flats, planned_buffer[["geometry"]], how="left", predicate="within", 
                     lsuffix="_left", rsuffix="_planned")
-                # Find the correct index column (might be 'index_planned' now)
-                index_cols = [col for col in join_df.columns if 'index_planned' in col.lower()]
-                if index_cols:
-                    right_index_col = index_cols[0]
-                    indices_to_remove = join_df[join_df[right_index_col].notnull()].index
-                    flats = flats.drop(indices_to_remove)
-                else:
-                    logger.warning("No suitable index column found in spatial join result. Skipping removal step.")
 
         logger.info("Filtered flats based on construction status, allocating population to flats based on 'wazim'.") 
         est_pop = np.zeros(len(flats))
@@ -91,12 +83,14 @@ def allocate_population(flat_db_path, population_polygon_path, output_path):
         # Replace NaN and 0 values with the average population per wazim
         est_pop[(np.isnan(est_pop)) | (est_pop == 0)] = avg_pop_per_wazim * flats['wazim'][(np.isnan(est_pop)) | (est_pop == 0)]
 
+        # Assign the estimated population to the dataframe
         flats['est_pop'] = est_pop
-        logger.info("Population allocation completed.")
-        # select only relevant columns
+
+        # select only relevant columns for export
         flats = flats[['egid', 'est_pop', 'geometry']]
         flats.to_file(output_path)
-        logger.info(f"Allocated population saved to {output_path}")
+
+        logger.info("Population allocation completed, output saved")
         logger.info(f"Total population allocated: {flats['est_pop'].sum()}")
 
     except Exception as e:
