@@ -15,7 +15,7 @@ rule all:
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/iso_merged.gpkg",
         DERIVED_DATA + "/kmeans_clusters.gpkg",
-        PLOTS_PATH + "/kmeans_clusters.html",
+        PLOTS_PATH +   "/kmeans_clusters.html",
         DERIVED_DATA + "/distance_matrix_trucks.csv",
         DERIVED_DATA + "/distance_matrix_walking.csv",
         DERIVED_DATA + "/flats_duration_current.gpkg",
@@ -29,7 +29,8 @@ rule allocate_population:
         population=RAW_DATA + "/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp"
     params:
         flats_under_construction=True,
-        flats_in_planning=True
+        flats_in_planning=True,
+        exclusion_buffer=5
     output:
         DERIVED_DATA + "/flats_population.gpkg"
     log:
@@ -95,7 +96,7 @@ rule generate_demand_points:
         gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
         html_map=PLOTS_PATH + "/kmeans_clusters.html"
     params:
-        n_clusters=3000
+        n_clusters=200
     conda:
         "envs/geo_env.yaml"
     script:
