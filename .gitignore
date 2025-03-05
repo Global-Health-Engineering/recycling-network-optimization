@@ -8,6 +8,7 @@ test.ipynb
 .snakemake
 test.ipynb
 .snakemake
+google_key.txt
 *.rdata
 *.Rproj
 *.html
