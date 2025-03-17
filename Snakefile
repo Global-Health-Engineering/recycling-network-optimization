@@ -6,7 +6,7 @@ DERIVED_DATA = "/home/silas/rcp_project/rcp_project/data/derived_data"
 PLOTS_PATH = "/home/silas/rcp_project/rcp_project/data/plots"
 
 # Define the cluster numbers we want to generate
-CLUSTERS = [5000, 4000, 3000, 2500, 2000, 1500, 1000, 500]
+CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 2500]
 
 # Configuration
 #configfile: "config.yaml"
@@ -18,13 +18,15 @@ rule all:
         DERIVED_DATA + "/isochrones_10min.gpkg",
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/iso_merged.gpkg",
-        expand(DERIVED_DATA + "/kmeans_clusters_{n}.gpkg", n=CLUSTERS),
-        expand(PLOTS_PATH + "/kmeans_clusters_{n}.html", n=CLUSTERS),
+        expand(DERIVED_DATA + "sensitivity_clusters/kmeans_clusters_{n}.gpkg", n=CLUSTERS),
+        expand(PLOTS_PATH + "sensitivity_clusters/html/kmeans_clusters_{n}.html", n=CLUSTERS),
         DERIVED_DATA + "/distance_matrix_trucks.csv",
         DERIVED_DATA + "/distance_matrix_walking.csv",
         DERIVED_DATA + "/flats_duration_current.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
-        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
+        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg",
+        DERIVED_DATA + "/optimized_sites.gpkg",
+        DERIVED_DATA + "/flats_duration_optimized.gpkg"
 
 rule allocate_population:
     input:
@@ -77,20 +79,19 @@ rule calculate_distances_to_rcp:
         flats = DERIVED_DATA + "/flats_population.gpkg",
         rcps1 = RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
         rcps2 = DERIVED_DATA+ "/rcps_clustering_ors.gpkg",
-        rcps3 = DERIVED_DATA + "/rcps_clustering_iso.gpkg" 
-        #rcps4 = DERIVED_DATA + "/rcps_optimisation_1.gpkg"
+        rcps3 = DERIVED_DATA + "/rcps_clustering_iso.gpkg",
+        rcps4 = DERIVED_DATA + "/rcps_optimisation.gpkg"
     output:
         DERIVED_DATA + "/flats_duration_current.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
-        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg"
-        #DERIVED_DATA + "/flats_duration_optimisation_1.gpkg"
+        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg",
+        DERIVED_DATA + "/flats_duration_optimisation.gpkg"
     log:
         "logs/distance_calc.log"
     conda:
         "envs/geo_env.yaml"
     script:
         "scripts/distance_calc.py"
-
 
 rule generate_demand_points:
     input:
@@ -105,3 +106,23 @@ rule generate_demand_points:
         "envs/geo_env.yaml"
     script:
         "scripts/demand_points.py"
+
+rule linear_optimisation:
+    input:
+        demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg",
+        potential_sites=DERIVED_DATA + "/all_pot_sites.gpkg",
+        distance_matrix=DERIVED_DATA + "/distance_matrix_walking.csv",
+        flats=DERIVED_DATA + "/flats_population.gpkg"
+    conda:
+        "envs/solver_env.yaml"
+    output:
+        sites=DERIVED_DATA + "/rcps_optimisation.gpkg",
+    params:
+        num_facilities=10,   # Number of NEW facilities to open
+        pop_limit=1500       # Maximum population outside 10-minute radius
+    log:
+        "logs/linear_optimization.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/linear_optimization.py"
