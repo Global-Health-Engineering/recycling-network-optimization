@@ -14,8 +14,6 @@ CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700
 # Update the all rule to include all cluster variants
 rule all:
     input:
-        DERIVED_DATA + "/isochrones_5min.gpkg",
-        DERIVED_DATA + "/isochrones_10min.gpkg",
         DERIVED_DATA + "/isochrones_all.gpkg",
         DERIVED_DATA + "/iso_merged.gpkg",
         expand(DERIVED_DATA + "sensitivity_clusters/kmeans_clusters_{n}.gpkg", n=CLUSTERS),
@@ -26,7 +24,9 @@ rule all:
         DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
         DERIVED_DATA + "/flats_duration_clustering_ors.gpkg",
         DERIVED_DATA + "/optimized_sites.gpkg",
-        DERIVED_DATA + "/flats_duration_optimized.gpkg"
+        DERIVED_DATA + "/flats_duration_optimized.gpkg",
+        DERIVED_DATA + "/merged_isochrones.gpkg",
+        PLOTS_PATH + "/map_clustering_iso.html"
 
 rule allocate_population:
     input:
@@ -126,3 +126,23 @@ rule linear_optimisation:
         "envs/geo_env.yaml"
     script:
         "scripts/linear_optimization.py"
+
+rule clustering_isochrones:
+    input:
+        isochrones=DERIVED_DATA + "/iso_merged.gpkg",
+        flats=DERIVED_DATA + "/flats_population.gpkg",
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
+        potential_sites=DERIVED_DATA + "/all_pot_sites.gpkg"
+    output:
+        merged_isochrones=DERIVED_DATA + "/merged_isochrones.gpkg",
+        clustered_sites=DERIVED_DATA + "/rcps_clustering_iso.gpkg",
+        html_map=PLOTS_PATH + "/map_clustering.html"
+    params:
+        eps=0.005,           # DBSCAN epsilon parameter for clustering
+        min_samples=20       # DBSCAN minimum samples parameter
+    log:
+        "logs/spatial_clustering.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/clustering_iso.py"
