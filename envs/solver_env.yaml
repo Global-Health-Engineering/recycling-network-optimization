@@ -1,7 +1,11 @@
 name: solver_env
 channels:
+  - gurobi
   - bioconda
   - conda-forge
 dependencies:
+ - geopandas<0.14.0
+ - numpy
+ - pandas<2.0.0
  - pulp
  - gurobi
