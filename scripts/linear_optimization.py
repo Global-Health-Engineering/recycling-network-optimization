@@ -18,10 +18,11 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         potential_sites = gpd.read_file(potential_sites_path)
         matrix = pd.read_csv(distance_matrix_path)
         
-        # Prepare distance matrix
+        # Prepare distance matrix with lowercase IDs
         temp = matrix.copy()
-        temp['prefix'] = temp['ID'].str.split('_').str[0]
-        temp['numeric_id'] = temp['ID'].str.split('_').str[1].astype(int)
+        temp['id'] = temp['ID'].str.lower()
+        temp['prefix'] = temp['id'].str.split('_').str[0]
+        temp['numeric_id'] = temp['id'].str.split('_').str[1].astype(int)
         temp.sort_values(['prefix', 'numeric_id'], inplace=True)
         
         distance_matrix = temp.pivot(index='ID', columns='cluster_ID', values='Walking_Duration_Minutes')
@@ -84,7 +85,6 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
             logger.warning("Gurobi solver not available. Using default solver.")
             solver_status = prob.solve()
         solve_time = time.time() - start_time
-        optimality_gap = 0
         
         # Check if the model was solved successfully
         if solver_status != 1:
@@ -103,12 +103,16 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         selected_sites.to_file(output_sites_path, driver="GPKG")
         
         # Return key metrics for validation
-        return {
-            "status": pulp.LpStatus[prob.status],
-            "objective": pulp.value(prob.objective),
-            "solve_time": solve_time,
-            "optimality_gap": optimality_gap,
-        }
+        def extract_results(model, solve_time):
+            # Here we assume optimality_gap is 0 by default.
+            optimality_gap = 0
+            return {
+                "status": pulp.LpStatus[model.status],
+                "objective": pulp.value(model.objective),
+                "solve_time": solve_time,
+            }
+        
+        return extract_results(prob, solve_time)
         
     except Exception as e:
         logger.error(f"Optimization failed: {e}")
