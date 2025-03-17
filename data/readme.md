@@ -1,0 +1,1 @@
+This directory contains all the data need to run the snakemake workflow
