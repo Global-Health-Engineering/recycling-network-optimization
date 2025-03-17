@@ -11,6 +11,12 @@ CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700
 # Configuration
 #configfile: "config.yaml"
 
+# target rule for sensitivity analysis
+rule run_sensitivity_analysis:
+    input:
+        # Generate sensitivity outputs for all cluster numbers
+        expand(DERIVED_DATA + "/sensitivity_clusters/flats_duration_{n}.gpkg", n=CLUSTERS)
+
 # Update the all rule to include all cluster variants
 rule all:
     input:
@@ -94,8 +100,8 @@ rule generate_demand_points:
         flats=DERIVED_DATA + "/flats_duration_current.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        gpkg=DERIVED_DATA + "/kmeans_clusters_{n_clusters}.gpkg",
-        html_map=PLOTS_PATH + "/kmeans_clusters_{n_clusters}.html"
+        gpkg=DERIVED_DATA + "sensitivity_clusters/kmeans_clusters_{n_clusters}.gpkg",
+        html_map=PLOTS_PATH + "sensitivity_clusters/kmeans_clusters_{n_clusters}.html"
     params:
         n_clusters=lambda wildcards: int(wildcards.n_clusters)
     conda:
@@ -162,3 +168,48 @@ rule clustering_isochrones:
         "envs/geo_env.yaml"
     script:
         "scripts/clustering_iso.py"
+
+rule sensitivity_distance_matrices:
+    input:
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
+        potential_locations=DERIVED_DATA + "/all_pot_sites.gpkg",
+        demand_points=DERIVED_DATA + "sensitivity_clusters/kmeans_clusters_{n_clusters}.gpkg"
+    output:
+        matrix_walking=DERIVED_DATA + "/sensitivity_clusters/distance_matrix_{n_clusters}.csv"
+    log:
+        "logs/sensitivity/distance_matrix_{n_clusters}.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/distance_matrix.py"
+        
+rule sensitivity_linear_optimisation:
+    input:
+        demand_points=DERIVED_DATA + "sensitivity_clusters/kmeans_clusters_{n_clusters}.gpkg",
+        potential_sites=DERIVED_DATA + "/all_pot_sites.gpkg",
+        distance_matrix=DERIVED_DATA + "/sensitivity_clusters/distance_matrix_{n_clusters}.csv",
+        flats=DERIVED_DATA + "/flats_population.gpkg"
+    output:
+        sites=DERIVED_DATA + "/sensitivity_clusters/rcps_optimisation_{n_clusters}.gpkg"
+    params:
+        num_facilities=10,
+        pop_limit=1500
+    log:
+        "logs/sensitivity/linear_optimization_{n_clusters}.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/linear_optimization.py"
+
+rule sensitivity_distance_calculation:
+    input:
+        flats=DERIVED_DATA + "/flats_population.gpkg",
+        rcps=DERIVED_DATA + "/sensitivity_clusters/rcps_optimisation_{n_clusters}.gpkg"
+    output:
+        duration=DERIVED_DATA + "/sensitivity_clusters/flats_duration_{n_clusters}.gpkg"
+    log:
+        "logs/sensitivity/distance_calc_{n_clusters}.log"
+    conda:
+        "envs/geo_env.yaml"
+    script:
+        "scripts/distance_calc_sensitivity.py"   
