@@ -1,1 +1,1 @@
-This directory contains all the data need to run the snakemake workflow
+This directory contains all the data need to run the snakemake workflow. The data will be downloaded by a snakemake rule.
