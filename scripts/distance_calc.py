@@ -14,7 +14,7 @@ buildings_zh = flats_zh.groupby('egid').agg({'est_pop': 'sum', 'geometry': 'firs
 buildings_agg = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:4326")
 
 # List of rcp keys and corresponding output indices
-rcp_keys = ['rcps1', 'rcps2', 'rcps3']
+rcp_keys = ['rcps1', 'rcps2', 'rcps3', 'rcps4']
 
 for i, key in enumerate(rcp_keys):
     # Read the current rcp dataset and set CRS
