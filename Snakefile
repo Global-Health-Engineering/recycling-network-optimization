@@ -5,9 +5,6 @@ RAW_DATA = "/home/silas/rcp_project/rcp_project/data/raw_data"
 DERIVED_DATA = "/home/silas/rcp_project/rcp_project/data/derived_data"
 PLOTS_PATH = "/home/silas/rcp_project/rcp_project/data/plots"
 
-# Define the cluster numbers we want to generate - keep in main file as it's used in multiple places
-CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 2500]
-
 # Update the all rule to include all outputs
 rule all:
     input:
@@ -22,7 +19,7 @@ rule all:
 
 # Main workflow rules
 include: "rules/data_preparation.smk"
-include: "rules/optimization_rules.smk"
+include: "rules/optimisation_rules.smk"
 
 # Sensitivity analysis rules
 include: "rules/sensitivity_rules.smk"

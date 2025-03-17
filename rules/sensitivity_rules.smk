@@ -1,12 +1,17 @@
 # Sensitivity analysis rules
 
+
+# Define the cluster numbers we want to generate - keep in main file as it's used in multiple places
+CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 2500]
+
 # Target rule for sensitivity analysis
 rule run_sensitivity_analysis:
     input:
         expand(DERIVED_DATA + "/sensitivity_clusters/flats_duration_{n}.gpkg", n=CLUSTERS)
 
+
 # Generate demand points for sensitivity analysis
-rule generate_demand_points:
+rule sensitivity_n_demand_points:
     input:
         flats=DERIVED_DATA + "/flats_duration_current.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
@@ -16,9 +21,9 @@ rule generate_demand_points:
     params:
         n_clusters=lambda wildcards: int(wildcards.n_clusters)
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/demand_points.py"
+        "../scripts/demand_points.py"
 
 rule sensitivity_distance_matrices:
     input:
@@ -30,9 +35,9 @@ rule sensitivity_distance_matrices:
     log:
         "logs/sensitivity/distance_matrix_{n_clusters}.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/distance_matrix.py"
+        "../scripts/distance_matrix.py"
         
 rule sensitivity_linear_optimisation:
     input:
@@ -48,9 +53,9 @@ rule sensitivity_linear_optimisation:
     log:
         "logs/sensitivity/linear_optimization_{n_clusters}.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/linear_optimization.py"
+        "../scripts/linear_optimization.py"
 
 rule sensitivity_distance_calculation:
     input:
@@ -61,9 +66,9 @@ rule sensitivity_distance_calculation:
     log:
         "logs/sensitivity/distance_calc_{n_clusters}.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/distance_calc_sensitivity.py"
+        "../scripts/distance_calc_sensitivity.py"
 
 # Analysis rule for sensitivity results
 rule analyze_sensitivity_results:
@@ -75,6 +80,6 @@ rule analyze_sensitivity_results:
     log:
         "logs/sensitivity/analysis.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/analyze_sensitivity.py"
+        "../scripts/analyze_sensitivity.py"

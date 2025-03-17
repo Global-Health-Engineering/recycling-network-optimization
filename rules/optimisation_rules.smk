@@ -7,7 +7,7 @@ rule linear_optimisation:
         distance_matrix=DERIVED_DATA + "/distance_matrix_walking.csv",
         flats=DERIVED_DATA + "/flats_population.gpkg"
     conda:
-        "envs/solver_env.yaml"
+        "../envs/solver_env.yaml"
     output:
         sites=DERIVED_DATA + "/rcps_optimisation.gpkg"
     params:
@@ -16,9 +16,9 @@ rule linear_optimisation:
     log:
         "logs/linear_optimization.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/linear_optimization.py"
+        "../scripts/linear_optimization.py"
 
 rule clustering_ors:
     input:
@@ -36,9 +36,9 @@ rule clustering_ors:
     log:
         "logs/spatial_clustering.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/clustering_ors.py"
+        "../scripts/clustering_ors.py"
 
 rule clustering_isochrones:
     input:
@@ -56,6 +56,6 @@ rule clustering_isochrones:
     log:
         "logs/spatial_clustering.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/clustering_iso.py"
+        "../scripts/clustering_iso.py"

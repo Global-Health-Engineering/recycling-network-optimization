@@ -12,9 +12,9 @@ rule allocate_population:
         DERIVED_DATA + "/flats_population.gpkg"
     log:
         "logs/population_allocation.log"
-    conda: "envs/geo_env.yaml"
+    conda: "../envs/geo_env.yaml"
     script:
-        "scripts/population_allocation.py"
+        "../scripts/population_allocation.py"
 
 rule generate_isochrones:
     input:
@@ -27,9 +27,9 @@ rule generate_isochrones:
         iso_merged=DERIVED_DATA + "/iso_merged.gpkg"
     log:
         "logs/isochores_calculations.log"
-    conda: "envs/geo_env.yaml"
+    conda: "../envs/geo_env.yaml"
     script:
-        "scripts/generate_isochrones.py"
+        "../scripts/generate_isochrones.py"
 
 rule calculate_distance_matrices:
     input:
@@ -42,9 +42,9 @@ rule calculate_distance_matrices:
     log:
         "logs/distance_matrix.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/distance_matrix.py"
+        "../scripts/distance_matrix.py"
 
 rule calculate_distances_to_rcp:
     input:
@@ -59,6 +59,20 @@ rule calculate_distances_to_rcp:
     log:
         "logs/distance_calc.log"
     conda:
-        "envs/geo_env.yaml"
+        "../envs/geo_env.yaml"
     script:
-        "scripts/distance_calc.py"
+        "../scripts/distance_calc.py"
+
+rule generate_demand_points:
+    input:
+        flats=DERIVED_DATA + "/flats_duration_current.gpkg",
+        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
+    output:
+        gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
+        html_map=PLOTS_PATH + "/kmeans_clusters.html"
+    params:
+        n_clusters=1000  # Default value
+    conda:
+        "../envs/geo_env.yaml"
+    script:
+        "../scripts/demand_points.py"
