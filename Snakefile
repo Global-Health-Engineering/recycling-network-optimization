@@ -21,5 +21,8 @@ rule all:
 include: "rules/data_preparation.smk"
 include: "rules/optimisation_rules.smk"
 
+# Analysis for number of facilities
+include: "rules/p_analysis_rules.smk"
+
 # Sensitivity analysis rules
 include: "rules/sensitivity_rules.smk"
