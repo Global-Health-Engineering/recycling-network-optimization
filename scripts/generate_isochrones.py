@@ -11,8 +11,6 @@ import pandas as pd
 # Obtain paths from snakemake
 INPUT_FLATS = snakemake.input['flats']
 INPUT_RCPS = snakemake.input['rcps']
-OUTPUT_GPKG_5 = snakemake.output['iso_5min']
-OUTPUT_GPKG_10 = snakemake.output['iso_10min']
 OUTPUT_GPKG_all= snakemake.output['iso_all']
 OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 
@@ -85,22 +83,6 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
         
         gdf.to_file(output_path, driver="GPKG")
         logger.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
-
-try:
-    client = openrouteservice.Client(base_url='http://localhost:8080/ors')
-    rcps = gpd.read_file(INPUT_RCPS)
-    logger.info("Imported datasets.")
-    rcps = rcps.to_crs(epsg=4326)
-
-    # Generate 5-minute isochrones
-    generate_and_save_isochrones(client, rcps, TIME_LIMITS[0], OUTPUT_GPKG_5)
-
-    # Generate 10-minute isochrones
-    generate_and_save_isochrones(client, rcps, TIME_LIMITS[1], OUTPUT_GPKG_10)
-
-except Exception as e:
-    logger.critical(f"An unexpected error occurred: {e}")
-    sys.exit(1)
 
 # generate 1-10 min isochrones without population estimation
 all_isochrones = []
