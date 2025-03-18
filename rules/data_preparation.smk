@@ -21,8 +21,6 @@ rule generate_isochrones:
         flats=DERIVED_DATA + "/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        iso_5min=DERIVED_DATA + "/isochrones_5min.gpkg",
-        iso_10min=DERIVED_DATA + "/isochrones_10min.gpkg",
         iso_all=DERIVED_DATA + "/isochrones_all.gpkg",
         iso_merged=DERIVED_DATA + "/iso_merged.gpkg"
     log:
@@ -37,7 +35,6 @@ rule calculate_distance_matrices:
         potential_locations=DERIVED_DATA + "/all_pot_sites.gpkg",
         demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg"
     output:
-        matrix_trucks=DERIVED_DATA + "/distance_matrix_trucks.csv",
         matrix_walking=DERIVED_DATA + "/distance_matrix_walking.csv"
     log:
         "logs/distance_matrix.log"
