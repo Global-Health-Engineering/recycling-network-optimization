@@ -1,12 +1,12 @@
 # Sensitivity analysis rules
 
-
-# Define the cluster numbers we want to generate - keep in main file as it's used in multiple places
 CLUSTERS = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 2500]
 
 # Target rule for sensitivity analysis
 rule run_sensitivity_analysis:
     input:
+        PLOTS_PATH + "/sensitivity_analysis/comparison_plot.png",
+        DERIVED_DATA + "/sensitivity_analysis/summary_metrics.csv",
         expand(DERIVED_DATA + "/sensitivity_clusters/flats_duration_{n}.gpkg", n=CLUSTERS)
 
 
@@ -48,12 +48,12 @@ rule sensitivity_linear_optimisation:
     output:
         sites=DERIVED_DATA + "/sensitivity_clusters/rcps_optimisation_{n_clusters}.gpkg"
     params:
-        num_facilities=10,
-        pop_limit=1500
+        num_facilities=12,
+        pop_limit=3000
     log:
         "logs/sensitivity/linear_optimization_{n_clusters}.log"
     conda:
-        "../envs/geo_env.yaml"
+        "../envs/solver_env.yaml"
     script:
         "../scripts/linear_optimization.py"
 
@@ -82,4 +82,4 @@ rule analyze_sensitivity_results:
     conda:
         "../envs/geo_env.yaml"
     script:
-        "../scripts/analyze_sensitivity.py"
+        "../scripts/sensitivity_analysis.py"
