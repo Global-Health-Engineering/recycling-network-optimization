@@ -4,8 +4,11 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+ - python=3.9
  - geopandas<0.14.0
  - numpy
  - pandas<2.0.0
  - pulp
- - gurobi
+ - pip
+ - pip:
+    - gurobipy
