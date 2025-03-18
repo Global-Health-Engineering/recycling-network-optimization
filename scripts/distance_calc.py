@@ -22,7 +22,11 @@ for i, key in enumerate(rcp_keys):
     rcps = rcps.to_crs("EPSG:4326")
 
     # Initialize BallTree for current rcps and ORS client
-    id_column = 'poi_id' if key == 'rcps1' else 'id'
+    if key == 'rcps1':
+        id_column = 'poi_id'
+    else:
+        id_column = 'id' if 'id' in rcps.columns else 'ID'
+
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, id_column)
 
     client = ors.Client(base_url='http://localhost:8080/ors')
