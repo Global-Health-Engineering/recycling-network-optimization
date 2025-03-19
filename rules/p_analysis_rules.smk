@@ -1,9 +1,8 @@
 
 # Number of facilites to test, 1-15
-P_VALUES= range(0,15, 1)
+P_VALUES= range(1,16, 1)
 
 # Target rule for p-analysis
-
 rule run_p_analysis:
     input:
         PLOTS_PATH + "/p-analysis/p_comparison_plot.png",
@@ -18,7 +17,7 @@ rule p_analysis_optimisation:
         sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     params:
         num_facilities= lambda wildcards: int(wildcards.p),
-        pop_limit=3000
+        pop_limit=12000
     log:
         "logs/sensitivity/linear_optimization_{p}.log"
     conda:
