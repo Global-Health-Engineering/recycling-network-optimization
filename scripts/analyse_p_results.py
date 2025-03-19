@@ -36,7 +36,6 @@ for p, duration_file in zip(p_values, duration_files):
     
     # Get corresponding RCP site file
     site_file = str(duration_file).replace('flats_duration_p_', 'rcps_optimisation_')
-    site_file = Path(site_file.replace('/p-analysis/', '/sensitivity_clusters/'))
     
     if site_file.exists():
         sites = gpd.read_file(site_file)
