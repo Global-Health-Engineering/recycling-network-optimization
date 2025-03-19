@@ -14,7 +14,7 @@ PLOTS_PATH = Path("/home/silas/rcp_project/rcp_project/data/plots")
 # Analyze results
 results = []
 for n in CLUSTERS:
-    duration_file = DERIVED_DATA / f"sensitivity_clusters/flats_duration_{n}.gpkg"
+    duration_file = DERIVED_DATA / f"sensitivity_analysis/flats_duration_{n}.gpkg"
     if not duration_file.exists():
         print(f"Skipping {n} - file not found")
         continue
