@@ -64,7 +64,6 @@ rule generate_potential_sites:
     input:
         slope_raster=DERIVED_DATA + "/slope_zurich.tif",
         trees=RAW_DATA + "/geodata_stadt_Zuerich/trees/data/data.gpkg",
-        flats=DERIVED_DATA + "/flats_duration_current.gpkg",
         parking=RAW_DATA + "/osm_data/parking_lots_zurich.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
         buildings=RAW_DATA + "/geodata_stadt_Zuerich/3d_buildings/data/data.gpkg",
