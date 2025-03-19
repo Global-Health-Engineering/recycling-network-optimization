@@ -80,7 +80,6 @@ if __name__ == "__main__":
 
     # Load the data and ensure CRS matches the raster
     tree_dataset = gpd.read_file(str(snakemake.input.trees)).to_crs(slope_raster.crs)
-    flats_duration = gpd.read_file(str(snakemake.input.flats)).to_crs(slope_raster.crs)
     parking_lots = gpd.read_file(str(snakemake.input.parking)).to_crs(slope_raster.crs)
     rcps = gpd.read_file(str(snakemake.input.rcps)).to_crs(slope_raster.crs)
     building_footprints = gpd.read_file(str(snakemake.input.buildings)).to_crs(slope_raster.crs)
