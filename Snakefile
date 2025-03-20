@@ -8,14 +8,13 @@ PLOTS_PATH = "/home/silas/rcp_project/rcp_project/data/plots"
 # Update the all rule to include all outputs
 rule all:
     input:
-        DERIVED_DATA + "/isochrones_all.gpkg",
-        DERIVED_DATA + "/iso_merged.gpkg",
-        DERIVED_DATA + "/distance_matrix_walking.csv",
-        DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
-        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg",
-        DERIVED_DATA + "/flats_duration_opt.gpkg",
-        DERIVED_DATA + "/merged_isochrones.gpkg",
-        PLOTS_PATH + "/map_clustering_iso.html"
+        DERIVED_DATA + "/workflow/isochrones_all.gpkg",
+        DERIVED_DATA + "/workflow/iso_merged.gpkg",
+        DERIVED_DATA + "/workflow/distance_matrix_walking.csv",
+        DERIVED_DATA + "/workflow/flats_duration_clustering_iso.gpkg",
+        DERIVED_DATA + "/workflow/flats_duration_clustering_ors.gpkg",
+        DERIVED_DATA + "/workflow/flats_duration_opt.gpkg",
+        DERIVED_DATA + "/workflow/merged_isochrones.gpkg",
 
 # Main workflow rules
 include: "rules/data_preparation.smk"
