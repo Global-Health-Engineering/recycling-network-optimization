@@ -1,5 +1,5 @@
 # Sensitivity analysis rules
-CLUSTERS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500]
+CLUSTERS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 2000]
 
 # Target rule for sensitivity analysis
 rule run_sensitivity_analysis:
