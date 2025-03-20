@@ -1,5 +1,4 @@
 # Sensitivity analysis rules
-
 CLUSTERS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1500]
 
 # Target rule for sensitivity analysis
@@ -13,7 +12,7 @@ rule run_sensitivity_analysis:
 # Generate demand points for sensitivity analysis
 rule sensitivity_n_demand_points:
     input:
-        flats=DERIVED_DATA + "/flats_duration_current.gpkg",
+        flats=DERIVED_DATA + "/workflow/flats_duration_current.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
         gpkg=DERIVED_DATA + "/sensitivity_analysis/kmeans_clusters_{n_clusters}.gpkg",
@@ -28,7 +27,7 @@ rule sensitivity_n_demand_points:
 rule sensitivity_distance_matrices:
     input:
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
-        potential_locations=DERIVED_DATA + "/all_pot_sites.gpkg",
+        potential_locations=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         demand_points=DERIVED_DATA + "/sensitivity_analysis/kmeans_clusters_{n_clusters}.gpkg"
     output:
         matrix_walking=DERIVED_DATA + "/sensitivity_analysis/distance_matrix_{n_clusters}.csv"
@@ -42,9 +41,9 @@ rule sensitivity_distance_matrices:
 rule sensitivity_linear_optimisation:
     input:
         demand_points=DERIVED_DATA + "/sensitivity_analysis/kmeans_clusters_{n_clusters}.gpkg",
-        potential_sites=DERIVED_DATA + "/all_pot_sites.gpkg",
+        potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         distance_matrix=DERIVED_DATA + "/sensitivity_analysis/distance_matrix_{n_clusters}.csv",
-        flats=DERIVED_DATA + "/flats_population.gpkg"
+        flats=DERIVED_DATA + "/workflow/flats_population.gpkg"
     output:
         sites=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg"
     params:
@@ -59,7 +58,7 @@ rule sensitivity_linear_optimisation:
 
 rule sensitivity_distance_calculation:
     input:
-        flats=DERIVED_DATA + "/flats_population.gpkg",
+        flats=DERIVED_DATA + "/workflow/flats_population.gpkg",
         rcps=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg"
     output:
         duration=DERIVED_DATA + "/sensitivity_analysis/flats_duration_{n_clusters}.gpkg"
