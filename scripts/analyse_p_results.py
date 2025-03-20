@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib.ticker as mticker
 import json
 from shapely.geometry import Point, mapping
+from shapely.geometry import shape
 
 # Get input and output files from snakemake
 duration_files = snakemake.input.duration_files
@@ -17,7 +18,6 @@ p_values = [int(Path(file).stem.split('_')[-1]) for file in duration_files]
 
 # Analyze results
 results = []
-site_info = {}
 
 # First pass: calculate metrics for each p value
 for p, duration_file in zip(p_values, duration_files):
@@ -34,46 +34,13 @@ for p, duration_file in zip(p_values, duration_files):
         'pop_outside_10min': pop_outside_10min
     })
     
-    # Get corresponding RCP site file
-    site_file = str(duration_file).replace('flats_duration_p_', 'rcps_optimisation_')
-    
-    if site_file.exists():
-        sites = gpd.read_file(site_file)
-        
-        # Store site information
-        site_info[p] = {
-            'count': len(sites),
-            'sites': sites.to_json()
-        }
-    else:
+    # (Original site info collection removed)
+    site_file = Path(str(duration_file).replace('flats_duration_p_', 'rcps_optimisation_'))
+    if not site_file.exists():
         print(f"Warning: Site file not found for p={p}: {site_file}")
 
-# Create results DataFrame
+# Create results DataFrame with only the indicator metrics and p values
 results_df = pd.DataFrame(results)
-
-# Create a GeoDataFrame with all sites and their p values
-all_sites = []
-for p, info in site_info.items():
-    if 'sites' in info:
-        sites = gpd.read_file(json.dumps(info['sites']))
-        sites['p_value'] = p
-        all_sites.append(sites)
-
-if all_sites:
-    all_sites_gdf = pd.concat(all_sites, ignore_index=True)
-    
-    # Convert to regular dataframe with geometry as WKT
-    all_sites_df = pd.DataFrame(all_sites_gdf.drop(columns='geometry'))
-    all_sites_df['geometry'] = all_sites_gdf.geometry.apply(lambda x: x.wkt)
-    
-    # Merge with results
-    results_df = results_df.merge(all_sites_df.groupby('p_value')['id'].apply(list).reset_index(),
-                                on='p_value', how='left')
-    results_df = results_df.merge(all_sites_df.groupby('p_value')['geometry'].apply(list).reset_index(),
-                                 on='p_value', how='left')
-else:
-    results_df['id'] = None
-    results_df['geometry'] = None
 
 # Plot results
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
@@ -111,19 +78,15 @@ for i in range(1, len(results_df)):
     if prev_pop > 0:  # Avoid division by zero
         pct_improvement = ((prev_pop - curr_pop) / prev_pop) * 100
         ax2.annotate(f"{pct_improvement:.1f}%", 
-                   xy=(results_df.iloc[i]['p_value'], curr_pop),
-                   xytext=(0, -15), 
-                   textcoords='offset points',
-                   ha='center', fontsize=8)
+                     xy=(results_df.iloc[i]['p_value'], curr_pop),
+                     xytext=(0, -15), 
+                     textcoords='offset points',
+                     ha='center', fontsize=8)
 
 plt.tight_layout()
 plt.savefig(output_plot, dpi=350)
 
-# Save results to CSV - convert lists to strings for CSV compatibility
-results_df['site_ids'] = results_df['id'].apply(lambda x: ','.join(map(str, x)) if isinstance(x, list) else '')
-results_df['site_geometries'] = results_df['geometry'].apply(lambda x: '|'.join(map(str, x)) if isinstance(x, list) else '')
-results_df = results_df.drop(columns=['id', 'geometry'])
-
+# Save summary results (only indicators and p value)
 results_df.to_csv(output_summary, index=False)
 
 print(f"Analysis complete. Results saved to {output_summary} and {output_plot}")
