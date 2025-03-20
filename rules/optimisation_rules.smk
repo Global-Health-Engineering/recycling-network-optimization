@@ -57,3 +57,21 @@ rule clustering_isochrones:
         "../envs/geo_env.yaml"
     script:
         "../scripts/clustering_iso.py"
+
+rule compare_methods:
+    input:
+        duration_current=DERIVED_DATA + "/workflow/flats_duration_current.gpkg",
+        duration_iso=DERIVED_DATA + "/workflow/flats_duration_clustering_iso.gpkg",
+        duration_ors=DERIVED_DATA + "/workflow/flats_duration_clustering_ors.gpkg",
+        duration_opt=DERIVED_DATA + "/workflow/flats_duration_opt.gpkg"
+    output:
+        comparison_csv=DERIVED_DATA + "/workflow/method_comparison.csv",
+        comparison_plot=PLOTS_PATH + "/workflow/method_comparison.png",
+        efficiency_plot=PLOTS_PATH + "/workflow/people_brought_in_per_rcp.png",
+        markdown_table=PLOTS_PATH + "/workflow/method_comparison_table.md"
+    log:
+        "logs/method_comparison.log"
+    conda:
+        "../envs/geo_env.yaml"
+    script:
+        "../scripts/method_analysis.py"
