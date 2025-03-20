@@ -1,5 +1,4 @@
-
-# Number of facilites to test, 1-15
+# Number of facilites (p-values) to test, 1-15
 P_VALUES= range(1,16, 1)
 
 # Target rule for p-analysis
@@ -10,16 +9,16 @@ rule run_p_analysis:
 
 rule p_analysis_optimisation:
     input:
-        demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg", 
-        potential_sites=DERIVED_DATA + "/all_pot_sites.gpkg",
-        distance_matrix=DERIVED_DATA + "/distance_matrix_walking.csv",
+        demand_points=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg", 
+        potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
+        distance_matrix=DERIVED_DATA + "/workflow/distance_matrix_walking.csv",
     output:
         sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     params:
         num_facilities= lambda wildcards: int(wildcards.p),
         pop_limit=12000
     log:
-        "logs/sensitivity/linear_optimization_{p}.log"
+        "logs/p-analysis/linear_optimization_{p}.log"
     conda:
         "../envs/solver_env.yaml"
     script:
@@ -27,12 +26,12 @@ rule p_analysis_optimisation:
 
 rule p_analysis_distance_calculation:
     input:
-        flats=DERIVED_DATA + "/flats_population.gpkg",
+        flats=DERIVED_DATA + "/workflow/flats_population.gpkg",
         rcps=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     output:
         duration=DERIVED_DATA + "/p-analysis/flats_duration_p_{p}.gpkg"
     log:
-        "logs/sensitivity/distance_matrix_{p}.log"
+        "logs/p-analysis/distance_calc_{p}.log"
     conda:
         "../envs/geo_env.yaml"
     script:

@@ -9,7 +9,7 @@ rule allocate_population:
         flats_in_planning=True,
         exclusion_buffer=5
     output:
-        DERIVED_DATA + "/flats_population.gpkg"
+        DERIVED_DATA + "/workflow/flats_population.gpkg"
     log:
         "logs/population_allocation.log"
     conda: "../envs/geo_env.yaml"
@@ -18,11 +18,11 @@ rule allocate_population:
 
 rule generate_isochrones:
     input:
-        flats=DERIVED_DATA + "/flats_population.gpkg",
+        flats=DERIVED_DATA + "/workflow/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        iso_all=DERIVED_DATA + "/isochrones_all.gpkg",
-        iso_merged=DERIVED_DATA + "/iso_merged.gpkg"
+        iso_all=DERIVED_DATA + "/workflow/isochrones_all.gpkg",
+        iso_merged=DERIVED_DATA + "/workflow/iso_merged.gpkg"
     log:
         "logs/isochores_calculations.log"
     conda: "../envs/geo_env.yaml"
@@ -32,10 +32,10 @@ rule generate_isochrones:
 rule calculate_distance_matrices:
     input:
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
-        potential_locations=DERIVED_DATA + "/all_pot_sites.gpkg",
-        demand_points=DERIVED_DATA + "/kmeans_clusters.gpkg"
+        potential_locations=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
+        demand_points=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg"
     output:
-        matrix_walking=DERIVED_DATA + "/distance_matrix_walking.csv"
+        matrix_walking=DERIVED_DATA + "/workflow/distance_matrix_walking.csv"
     log:
         "logs/distance_matrix.log"
     conda:
@@ -45,14 +45,14 @@ rule calculate_distance_matrices:
 
 rule calculate_distances_to_rcp:
     input:
-        flats = DERIVED_DATA + "/flats_population.gpkg",
-        rcps1 = DERIVED_DATA+ "/rcps_clustering_ors.gpkg",
-        rcps2 = DERIVED_DATA + "/rcps_clustering_iso.gpkg",
-        rcps3 = DERIVED_DATA + "/rcps_optimisation.gpkg"
+        flats = DERIVED_DATA + "/workflow/flats_population.gpkg",
+        rcps1 = DERIVED_DATA+ "/workflow/rcps_clustering_ors.gpkg",
+        rcps2 = DERIVED_DATA + "/workflow/rcps_clustering_iso.gpkg",
+        rcps3 = DERIVED_DATA + "/workflow/rcps_optimisation.gpkg"
     output:
-        DERIVED_DATA + "/flats_duration_clustering_iso.gpkg",
-        DERIVED_DATA + "/flats_duration_clustering_ors.gpkg",
-        DERIVED_DATA + "/flats_duration_opt.gpkg"
+        DERIVED_DATA + "/workflow/flats_duration_clustering_iso.gpkg",
+        DERIVED_DATA + "/workflow/flats_duration_clustering_ors.gpkg",
+        DERIVED_DATA + "/workflow/flats_duration_opt.gpkg"
     log:
         "logs/distance_calc.log"
     conda:
@@ -62,15 +62,15 @@ rule calculate_distances_to_rcp:
 
 rule generate_potential_sites:
     input:
-        slope_raster=DERIVED_DATA + "/slope_zurich.tif",
+        elevation_model= RAW_DATA + "/DHM25/ASCII_GRID_1part/dhm25_grid_raster.asc",
         trees=RAW_DATA + "/geodata_stadt_Zuerich/trees/data/data.gpkg",
         parking=RAW_DATA + "/osm_data/parking_lots_zurich.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
         buildings=RAW_DATA + "/geodata_stadt_Zuerich/3d_buildings/data/data.gpkg",
         vbz=RAW_DATA + "/geodata_stadt_Zuerich/vbz/data/data.gpkg"
     output:
-        sites=DERIVED_DATA + "/all_pot_sites.gpkg",
-        map=PLOTS_PATH + "/suitable_sites_map.html"
+        sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
+        map=PLOTS_PATH + "/workflow/suitable_sites_map.html"
     params:
         buffer_dist_vbz=2,         # meters buffer around VBZ infrastructure
         buffer_trees=2,            # meters buffer around trees
@@ -86,11 +86,11 @@ rule generate_potential_sites:
 
 rule generate_demand_points:
     input:
-        flats=DERIVED_DATA + "/flats_duration_current.gpkg",
+        flats=DERIVED_DATA + "/workflow/flats_population.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp"
     output:
-        gpkg=DERIVED_DATA + "/kmeans_clusters.gpkg",
-        html_map=PLOTS_PATH + "/kmeans_clusters.html"
+        gpkg=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg",
+        html_map=PLOTS_PATH + "/workflow/kmeans_clusters.html"
     params:
         n_clusters=1000  # Default value
     conda:
