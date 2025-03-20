@@ -1,7 +1,7 @@
 import geopandas as gpd
 import openrouteservice
-from openrouteservice import exceptions
 import sys
+import openrouteservice as ors
 import os
 from shapely.geometry import shape
 from snakemake.logging import logger
@@ -15,10 +15,12 @@ OUTPUT_GPKG_all= snakemake.output['iso_all']
 OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 
 TIME_LIMITS = [300, 600]  # in seconds
-n = 10  # number of recycling points to process
+
+client = ors.Client(base_url='http://localhost:8080/ors')
+flats = gpd.read_file(INPUT_FLATS).to_crs("EPSG:4326")
+rcps = gpd.read_file(INPUT_RCPS).to_crs("EPSG:4326")
 
 logger.info("Started the script.")
-
 
 def generate_isochrones(client, locations, time_limit):
     try:
@@ -74,7 +76,7 @@ def generate_and_save_isochrones(client, rcps, time_limit, output_path):
     if iso:
         gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
         
-        flats = gpd.read_file(INPUT_FLATS)
+
         total_pop = flats['est_pop'].sum()
         logger.info(f"Imported flat data, population estimation: {total_pop}.")
         
