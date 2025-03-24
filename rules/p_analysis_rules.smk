@@ -1,5 +1,5 @@
 # Number of facilites (p-values) to test, 1-15
-P_VALUES= range(1,16, 1)
+P_VALUES= range(1,31, 1)
 
 # Target rule for p-analysis
 rule run_p_analysis:

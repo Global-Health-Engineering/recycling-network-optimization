@@ -62,27 +62,27 @@ rule calculate_distances_to_rcp:
 
 rule generate_potential_sites:
     input:
-        elevation_model= RAW_DATA + "/DHM25/ASCII_GRID_1part/dhm25_grid_raster.asc",
+        slope_raster=RAW_DATA + "/slope_zurich.tif",
         trees=RAW_DATA + "/geodata_stadt_Zuerich/trees/data/data.gpkg",
-        parking=RAW_DATA + "/osm_data/parking_lots_zurich.gpkg",
+        parking_lots=RAW_DATA + "/osm_data/parking_lots_zurich.gpkg",
         rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
         buildings=RAW_DATA + "/geodata_stadt_Zuerich/3d_buildings/data/data.gpkg",
         vbz=RAW_DATA + "/geodata_stadt_Zuerich/vbz/data/data.gpkg"
     output:
-        sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
+        potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         map=PLOTS_PATH + "/workflow/suitable_sites_map.html"
     params:
-        buffer_dist_vbz=2,         # meters buffer around VBZ infrastructure
-        buffer_trees=2,            # meters buffer around trees
-        max_slope=5,               # Maximum slope in degrees
-        area_threshold=16,         # Minimum area in square meters
-        buffer_buildings=14        # meters buffer around buildings
+        buffer_dist_vbz=2,  # meters buffer around VBZ infrastructure
+        buffer_trees=2,     # meters buffer around trees
+        max_slope=5,        # Maximum slope in degrees
+        area_threshold=16,  # Minimum area in square meters
+        buffer_buildings=14 # meters buffer around buildings
     log:
-        "logs/site_selection/potential_sites.log"
+        "logs/generate_potential_sites.log"
     conda:
         "../envs/geo_env.yaml"
     script:
-        "../scripts/generate_potential_sites.py"
+        "../scripts/suitability_analysis_nb.py"
 
 rule generate_demand_points:
     input:
