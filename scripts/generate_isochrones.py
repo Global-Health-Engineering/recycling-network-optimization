@@ -1,11 +1,10 @@
 import geopandas as gpd
-import openrouteservice
 import sys
-import openrouteservice as ors
 import os
-from shapely.geometry import shape
+import requests
 from snakemake.logging import logger
 from shapely.ops import unary_union
+from shapely.geometry import shape
 import pandas as pd
 
 # Obtain paths from snakemake
@@ -15,32 +14,39 @@ OUTPUT_GPKG_all= snakemake.output['iso_all']
 OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 
 TIME_LIMITS = [300, 600]  # in seconds
+VALHALLA_ISOCHRONE_URL = "http://localhost:8002/isochrone"
 
-client = ors.Client(base_url='http://localhost:8080/ors')
 flats = gpd.read_file(INPUT_FLATS).to_crs("EPSG:4326")
 rcps = gpd.read_file(INPUT_RCPS).to_crs("EPSG:4326")
 
 logger.info("Started the script.")
 
-def generate_isochrones(client, locations, time_limit):
+def generate_isochrones(locations, time_limit, valhalla_url=VALHALLA_ISOCHRONE_URL):
     try:
-        params = {
-            "locations": [locations],
-            "range": [time_limit],
-            "range_type": "time",
-            "units": "m",
-            "location_type": "start",
-            "smoothing": 0.3,
-            "profile": "foot-walking",
+        # Prepare Valhalla isochrone request
+        valhalla_params = {
+            "locations": [{"lat": locations[1], "lon": locations[0]}],
+            "costing": "pedestrian",
+            "contours": [{"time": time_limit}],
+            "polygons": True,
+            "denoise": 0.5,
+            "generalize": 50,
+            "format": "json"
         }
-        isochrones = client.isochrones(**params)
-        return isochrones
-    except exceptions.ApiError as e:
-        logger.error(f"API error for location {locations}: {e}")
+        
+        # Make the request to Valhalla
+        response = requests.post(valhalla_url, json=valhalla_params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Valhalla Isochrone API error: Status code {response.status_code}")
+            logger.error(response.text)
+            return None
+            
     except Exception as e:
-        logger.error(f"Unexpected error for location {locations}: {e}")
-    return None
-
+        logger.error(f"Unexpected error generating isochrone for {locations}: {e}")
+        return None
 
 def count_flats_in_isochrones(flats, gdf):
     try:
@@ -59,56 +65,6 @@ def count_flats_in_isochrones(flats, gdf):
         logger.info(f"Total population across all isochrones: {gdf['est_pop'].sum()}")
     except Exception as e:
         logger.error(f"An error occurred while counting flats in isochrones: {e}")
-
-def generate_and_save_isochrones(client, rcps, time_limit, output_path):
-    iso = []
-    for _, row in rcps.iterrows():
-        lon, lat = row.geometry.x, row.geometry.y
-        isochrone = generate_isochrones(client, [lon, lat], time_limit)
-        if isochrone:
-            for feature in isochrone['features']:
-                iso.append({
-                    'geometry': shape(feature['geometry']),
-                    'poi_id': row['poi_id']
-                })
-        logger.info(f"Processed recycling point {row['poi_id']} for {time_limit//60} min.")
-    
-    if iso:
-        gdf = gpd.GeoDataFrame(iso, crs="EPSG:4326")
-        
-
-        total_pop = flats['est_pop'].sum()
-        logger.info(f"Imported flat data, population estimation: {total_pop}.")
-        
-        # Count flats within isochrones
-        count_flats_in_isochrones(flats, gdf)
-        
-        gdf.to_file(output_path, driver="GPKG")
-        logger.info(f"Saved {time_limit//60}-min isochrones with flat counts to {output_path}.")
-
-# generate 1-10 min isochrones without population estimation
-all_isochrones = []
-
-times = [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
-
-for time in times:
-    for _, row in rcps.iterrows():
-        isochrone = generate_isochrones(client, [row.geometry.x, row.geometry.y], time)
-        if isochrone is not None:
-            all_isochrones.extend([
-                {
-                    'geometry': shape(feature['geometry']),
-                    'poi_id': row['poi_id'],
-                    'time': time
-                }
-                for feature in isochrone['features']
-            ])
-if all_isochrones:
-    all_isochrones_gdf = gpd.GeoDataFrame(all_isochrones, crs="EPSG:4326")
-    all_isochrones_gdf.to_file(OUTPUT_GPKG_all, driver="GPKG")
-    logger.info("Generated all isochrones.")
-else:
-    logger.error("unexpected error")
 
 def merge_isochrones_preserve_time(isochrones_gdf):
     """
@@ -151,10 +107,39 @@ def merge_isochrones_preserve_time(isochrones_gdf):
             if accumulated_geom:
                 accumulated_geom = unary_union([accumulated_geom, remaining_geom])
             else:
+                accumulated_geom = remaining_geom
                 logger.info(f"Processed isochrone with time {current_time} minutes.")
 
     return merged_isochrones
 
+# generate 1-10 min isochrones without population estimation
+all_isochrones = []
+
+times = [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]
+
+for time in times:
+    for _, row in rcps.iterrows():
+        isochrone = generate_isochrones([row.geometry.x, row.geometry.y], time)
+        if isochrone is not None:
+            # Extract features from the Valhalla isochrone response
+            for feature in isochrone.get('features', []):
+                all_isochrones.append({
+                    'geometry': shape(feature['geometry']),
+                    'poi_id': row['poi_id'],
+                    'time': time
+                })
+
+if all_isochrones:
+    all_isochrones_gdf = gpd.GeoDataFrame(all_isochrones, crs="EPSG:4326")
+    all_isochrones_gdf.to_file(OUTPUT_GPKG_all, driver="GPKG")
+    logger.info("Generated all isochrones.")
+else:
+    logger.error("No isochrones generated - check if Valhalla isochrone service is running")
+
 # Merge isochrones
-merged_isochrones_gdf = merge_isochrones_preserve_time(all_isochrones_gdf)
-merged_isochrones_gdf.to_file(OUTPUT_GPKG_merged, driver="GPKG")
+if all_isochrones:
+    merged_isochrones_gdf = merge_isochrones_preserve_time(all_isochrones_gdf)
+    merged_isochrones_gdf.to_file(OUTPUT_GPKG_merged, driver="GPKG")
+    logger.info("Merged isochrones saved to file.")
+else:
+    logger.error("Could not merge isochrones as none were generated")

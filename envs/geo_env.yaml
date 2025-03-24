@@ -12,6 +12,5 @@ dependencies:
   - rasterstats
   - numpy==1.24.3
   - mdutils
+  - requests
   - pip
-  - pip:
-    - openrouteservice

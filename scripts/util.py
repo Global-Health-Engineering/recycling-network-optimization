@@ -2,7 +2,7 @@
 
 import numpy as np
 from sklearn.neighbors import BallTree
-import openrouteservice
+import requests
 from shapely.geometry import Point
 import logging
 import os
@@ -35,34 +35,50 @@ def initialize_ball_tree(rcps, identifier_column):
     logger.info("BallTree initialized with RCP coordinates.")
     return tree, rcp_coords, rcp_ids
 
-def calculate_duration(origin, destination, client):
+def calculate_duration_valhalla(origin, destination, valhalla_url="http://localhost:8002/route"):
     """
-    Calculate walking duration between origin and destination using ORS.
+    Calculate walking duration between origin and destination using Valhalla.
 
     Parameters:
     - origin: Tuple of (longitude, latitude)
     - destination: Tuple of (longitude, latitude)
-    - client: OpenRouteService client instance
+    - valhalla_url: URL for the Valhalla routing service
 
     Returns:
     - Duration in minutes if successful, else None
     """
     try:
-        route = client.directions(
-            coordinates=[origin, destination],
-            profile='foot-walking',
-            format='geojson'
-        )
-        duration_seconds = route['features'][0]['properties']['segments'][0]['duration']
-        duration_minutes = duration_seconds / 60  # Convert to minutes
-        return duration_minutes
-    except openrouteservice.exceptions.ApiError as e:
-        logger.error(f"ORS API error for origin {origin} to destination {destination}: {e}")
+        # Prepare Valhalla request
+        valhalla_params = {
+            "locations": [
+                {"lat": origin[1], "lon": origin[0]},
+                {"lat": destination[1], "lon": destination[0]}
+            ],
+            "costing": "pedestrian",
+            "directions_options": {
+                "units": "kilometers"
+            },
+            "format": "json"
+        }
+        
+        # Make the request to Valhalla
+        response = requests.post(valhalla_url, json=valhalla_params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            duration_seconds = data["trip"]["legs"][0]["summary"]["time"]
+            duration_minutes = duration_seconds / 60  # Convert to minutes
+            return duration_minutes
+        else:
+            logger.error(f"Valhalla API error: Status code {response.status_code}")
+            logger.error(response.text)
+            return None
+            
     except Exception as e:
         logger.error(f"Unexpected error for origin {origin} to destination {destination}: {e}")
-    return None
+        return None
 
-def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, client, radius=5000):
+def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url="http://localhost:8002/route", radius=5000):
     """
     Find the nearest RCP within a specified radius and calculate walking duration.
 
@@ -71,7 +87,7 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, client, radi
     - tree: BallTree instance with RCP coordinates
     - rcp_coords: List of RCP (longitude, latitude) tuples
     - rcp_ids: List of RCP identifiers
-    - client: ORS client instance
+    - valhalla_url: URL for the Valhalla routing service
     - radius: Search radius in meters (default: 5000)
 
     Returns:
@@ -87,10 +103,60 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, client, radi
         actual_distance = dist * 6371000  # Earth radius in meters
         if actual_distance <= radius:
             rcp_coord = rcp_coords[idx]
-            duration = calculate_duration(flat_coord, rcp_coord, client)
+            duration = calculate_duration_valhalla(flat_coord, rcp_coord, valhalla_url)
             if duration is not None:
                 return rcp_ids[idx], round(duration, 2)
     return None, None
+
+def generate_isochrone_valhalla(coord, time_limit, valhalla_url="http://localhost:8002/isochrone"):
+    """
+    Generate an isochrone using Valhalla for a given coordinate and time limit.
+    
+    Parameters:
+    - coord: Tuple of (longitude, latitude)
+    - time_limit: Time in seconds
+    - valhalla_url: URL for the Valhalla isochrone service
+    
+    Returns:
+    - GeoJSON isochrone if successful, else None
+    """
+    try:
+        # Prepare Valhalla isochrone request
+        valhalla_params = {
+            "locations": [{"lat": coord[1], "lon": coord[0]}],
+            "costing": "pedestrian",
+            "contours": [{"time": time_limit/60}],
+            "polygons": True,
+            "denoise": 0.5,
+            "generalize": 50,
+            "format": "json"
+        }
+        
+        # Make the request to Valhalla
+        response = requests.post(valhalla_url, json=valhalla_params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Valhalla Isochrone API error: Status code {response.status_code}")
+            logger.error(response.text)
+            return None
+            
+    except Exception as e:
+        logger.error(f"Unexpected error generating isochrone for {coord}: {e}")
+        return None
+
+# For backward compatibility, keep functions with old names but use the new implementation
+def calculate_duration(origin, destination, client=None, valhalla_url="http://localhost:8002/route"):
+    """
+    Backward compatibility function that uses Valhalla instead of ORS.
+    """
+    return calculate_duration_valhalla(origin, destination, valhalla_url)
+
+# Placeholder to maintain compatibility with the merge_isochrones_preserve_time function
+import geopandas as gpd
+import pandas as pd
+from shapely.ops import unary_union
 
 def merge_isochrones_preserve_time(isochrones_gdf):
     """
@@ -153,18 +219,11 @@ if __name__ == "__main__":
         # Initialize BallTree
         tree, rcp_coords, rcp_ids = initialize_ball_tree(rcps)
 
-        # Initialize ORS client
-        ors_key = os.getenv('ORS_API_KEY')
-        if not ors_key:
-            logger.error("OpenRouteService API key not found. Please set the 'ORS_API_KEY' environment variable.")
-            return
-        client = openrouteservice.Client(key=ors_key)
-
         # Example flat geometry (replace with actual data)
         example_flat_geom = Point(8.5417, 47.3769)  # Longitude, Latitude for Zurich
 
         # Find nearest RCP and duration
-        rcp_id, duration = find_nearest_rcp_duration(example_flat_geom, tree, rcp_coords, rcp_ids, client)
+        rcp_id, duration = find_nearest_rcp_duration(example_flat_geom, tree, rcp_coords, rcp_ids)
         if rcp_id and duration:
             logger.info(f"Nearest RCP ID: {rcp_id}, Duration: {duration} minutes")
         else:

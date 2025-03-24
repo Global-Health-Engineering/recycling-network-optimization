@@ -1,5 +1,4 @@
 import geopandas as gpd
-import openrouteservice as ors
 import time
 import numpy as np
 import scripts.util as util
@@ -16,12 +15,15 @@ buildings_agg = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:43
 # List of rcp keys and corresponding output indices
 rcp_keys = ['rcps1', 'rcps2', 'rcps3']
 
+# Valhalla routing service URL
+valhalla_url = "http://localhost:8002/route"
+
 for i, key in enumerate(rcp_keys):
     # Read the current rcp dataset and set CRS
     rcps = gpd.read_file(snakemake.input[key])
     rcps = rcps.to_crs("EPSG:4326")
 
-    # Initialize BallTree for current rcps and ORS client
+    # Initialize BallTree for current rcps
     if key == 'rcps1':
         id_column = 'poi_id'
     else:
@@ -29,12 +31,10 @@ for i, key in enumerate(rcp_keys):
 
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, id_column)
 
-    client = ors.Client(base_url='http://localhost:8080/ors')
-
     # Copy the aggregated buildings and compute nearest rcp duration
     buildings = buildings_agg.copy()
     buildings['nearest_rcp_id'], buildings['duration'] = zip(*buildings['geometry'].apply(
-        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)
+        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, valhalla_url)
     ))
 
     # Calculate impact measures

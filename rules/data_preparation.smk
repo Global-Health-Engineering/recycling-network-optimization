@@ -92,7 +92,7 @@ rule generate_demand_points:
         gpkg=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg",
         html_map=PLOTS_PATH + "/workflow/kmeans_clusters.html"
     params:
-        n_clusters=1000  # Default value
+        n_clusters=200  # Default value
     conda:
         "../envs/geo_env.yaml"
     script:

@@ -18,11 +18,11 @@ def aggregate_flats(flats):
     return flats.groupby('egid').agg({'est_pop': 'sum', 'geometry': 'first'}).reset_index()
 
 # 3. Compute Nearest RCP Durations
-def compute_nearest_durations(buildings, rcps, client):
+def compute_nearest_durations(buildings, rcps, valhalla_url="http://localhost:8002/route"):
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, 'poi_id')
     durations = buildings.copy()
     durations['nearest_rcp_id'], durations['duration'] = zip(*durations['geometry'].apply(
-        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, client)
+        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, valhalla_url)
     ))
     return gpd.GeoDataFrame(durations, geometry='geometry', crs="EPSG:4326")
 
@@ -156,12 +156,11 @@ def main():
     flats, rcps, potential_sites = load_data()
     buildings = aggregate_flats(flats)
     
-    # Initialize ORS client (global for use in lambda)
-    global client
-    client = ors.Client(base_url='http://localhost:8080/ors')
+    # Use Valhalla for routing
+    valhalla_url = "http://localhost:8002/route"
     
     # Compute durations and export
-    flats_duration = compute_nearest_durations(buildings, rcps, client)
+    flats_duration = compute_nearest_durations(buildings, rcps, valhalla_url)
     flats_duration.to_file(snakemake.output['flats_duration'], driver='GPKG')
     
     # Cluster flats and compute cluster centres
