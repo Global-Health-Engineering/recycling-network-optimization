@@ -23,6 +23,8 @@ def initialize_ball_tree(rcps, identifier_column):
     - rcp_coords: List of RCP coordinates as (longitude, latitude) tuples.
     - rcp_ids: List of RCP identifiers.
     """
+    identifier_column = 'poi_id' if 'poi_id' in rcps.columns else ('ID' if 'ID' in rcps.columns else 'id')
+
     rcp_coords = rcps.geometry.apply(lambda geom: (geom.x, geom.y)).tolist()
     rcp_ids = rcps[identifier_column].tolist()
 
