@@ -1,6 +1,4 @@
 import geopandas as gpd
-import sys
-import os
 import requests
 from snakemake.logging import logger
 from shapely.ops import unary_union
@@ -27,7 +25,7 @@ def generate_isochrones(locations, time_limit, valhalla_url=VALHALLA_ISOCHRONE_U
         valhalla_params = {
             "locations": [{"lat": locations[1], "lon": locations[0]}],
             "costing": "pedestrian",
-            "contours": [{"time": time_limit}],
+            "contours": [{"time": time_limit/60}],
             "polygons": True,
             "denoise": 0.5,
             "generalize": 50,
