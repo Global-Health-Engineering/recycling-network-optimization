@@ -12,7 +12,7 @@ rule linear_optimisation:
         sites=DERIVED_DATA + "/workflow/rcps_optimisation.gpkg"
     params:
         num_facilities=10,   # Number of NEW facilities to open
-        pop_limit=1500       # Maximum population outside 10-minute radius
+        pop_limit=10000       # Maximum population outside 10-minute radius
     log:
         "logs/linear_optimization.log"
     script:
