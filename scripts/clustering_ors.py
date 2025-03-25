@@ -3,7 +3,6 @@ import pandas as pd
 import folium
 import branca.colormap as cm
 from sklearn.cluster import DBSCAN
-import openrouteservice as ors
 import scripts.util as util
 
 # 1. Data Loading
