@@ -20,7 +20,7 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         
         # Prepare distance matrix with lowercase IDs
         temp = matrix.copy()
-        temp['id']=temp['ID']
+        temp['id']=temp['ID'].astype(str)
         temp['prefix'] = temp['id'].str.split('_').str[0]
         temp['numeric_id'] = temp['id'].str.split('_').str[1].astype(int)
         temp.sort_values(['prefix', 'numeric_id'], inplace=True)
@@ -123,5 +123,4 @@ if __name__ == "__main__":
         distance_matrix_path=snakemake.input.distance_matrix,
         output_sites_path=snakemake.output.sites,
         num_facilities=snakemake.params.num_facilities,
-        pop_limit=snakemake.params.pop_limit
     )
