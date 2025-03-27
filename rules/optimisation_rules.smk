@@ -5,7 +5,6 @@ rule linear_optimisation:
         demand_points=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg",
         potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         distance_matrix=DERIVED_DATA + "/workflow/distance_matrix.csv",
-        flats=DERIVED_DATA + "/workflow/flats_population.gpkg"
     conda:
         "../envs/solver_env.yaml"
     output:
