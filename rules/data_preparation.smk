@@ -23,6 +23,8 @@ rule generate_isochrones:
     output:
         iso_all=DERIVED_DATA + "/workflow/isochrones_all.gpkg",
         iso_merged=DERIVED_DATA + "/workflow/iso_merged.gpkg"
+    params:
+        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
     log:
         "logs/isochores_calculations.log"
     conda: "../envs/geo_env.yaml"
@@ -31,11 +33,12 @@ rule generate_isochrones:
 
 rule calculate_distance_matrices:
     input:
-        rcps=RAW_DATA + "/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp",
         potential_locations=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         demand_points=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg"
     output:
-        matrix_walking=DERIVED_DATA + "/workflow/distance_matrix_walking.csv"
+        matrix_walking=DERIVED_DATA + "/workflow/distance_matrix.csv"
+    params:
+        routing_engine=ROUTING_ENGINE
     log:
         "logs/distance_matrix.log"
     conda:
@@ -53,6 +56,8 @@ rule calculate_distances_to_rcp:
         DERIVED_DATA + "/workflow/flats_duration_clustering_iso.gpkg",
         DERIVED_DATA + "/workflow/flats_duration_clustering_ors.gpkg",
         DERIVED_DATA + "/workflow/flats_duration_opt.gpkg"
+    params:
+        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
     log:
         "logs/distance_calc.log"
     conda:
@@ -92,7 +97,7 @@ rule generate_demand_points:
         gpkg=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg",
         html_map=PLOTS_PATH + "/workflow/kmeans_clusters.html"
     params:
-        n_clusters=200  # Default value
+        n_clusters=100  # Default value
     conda:
         "../envs/geo_env.yaml"
     script:
