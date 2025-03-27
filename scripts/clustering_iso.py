@@ -7,7 +7,12 @@ import folium
 import branca.colormap as cm
 from shapely.ops import unary_union
 import sys
+import os
 import logging
+
+# Add path to import utility functions
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.util import calculate_duration, generate_isochrone, merge_isochrones_preserve_time
 
 # Set up logging
 logging.basicConfig(
@@ -20,49 +25,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def merge_isochrones_preserve_time(isochrones_gdf):
-    """
-    Merge isochrones preserving lower time values.
-
-    Parameters:
-    - isochrones_gdf: GeoDataFrame with isochrones and 'time' attribute.
-
-    Returns:
-    - GeoDataFrame with merged isochrones.
-    """
-    # Ensure CRS is EPSG:4326
-    if isochrones_gdf.crs != "EPSG:4326":
-        isochrones_gdf = isochrones_gdf.to_crs(epsg=4326)
-
-    # Sort isochrones by 'time' ascending
-    isochrones_sorted = isochrones_gdf.sort_values(by='time')
-
-    merged_isochrones = gpd.GeoDataFrame(columns=isochrones_sorted.columns, crs="EPSG:4326")
-
-    # Initialize an empty geometry for subtraction
-    accumulated_geom = None
-
-    for _, row in isochrones_sorted.iterrows():
-        current_geom = row.geometry
-        current_time = row['time']
-
-        if accumulated_geom:
-            remaining_geom = current_geom.difference(accumulated_geom)
-        else:
-            remaining_geom = current_geom
-
-        if not remaining_geom.is_empty:
-            new_row = row.copy()
-            new_row.geometry = remaining_geom
-            # Ensure the new_row GeoDataFrame has the correct CRS
-            new_row = gpd.GeoDataFrame([new_row], crs="EPSG:4326")
-            merged_isochrones = pd.concat([merged_isochrones, new_row], ignore_index=True)
-            # Update accumulated geometry
-            if accumulated_geom:
-                accumulated_geom = unary_union([accumulated_geom, remaining_geom])
-            else:
-                accumulated_geom = remaining_geom
-    return merged_isochrones
+# Get routing engine from params
+ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
+logger.info(f"Using {ROUTING_ENGINE} routing engine")
 
 def main():
     # Load inputs from Snakemake
@@ -89,9 +54,8 @@ def main():
 
     # Identify flats outside any isochrones
     flats_outside = flats_pop_4326[~flats_pop_4326.geometry.within(iso_union)]
-    
-    # Apply DBSCAN clustering
-    logger.info("Applying DBSCAN clustering")
+    logger.info(f"Found {len(flats_outside)} flats outside isochrones")
+
     # Convert to centroids and set up the data for clustering
     X = pd.DataFrame({
         'x': flats_outside.geometry.x,
@@ -99,15 +63,17 @@ def main():
         'population': flats_outside['est_pop']
     })
 
-    # Apply DBSCAN clustering with parameters from input
+    # Apply DBSCAN clustering
+    logger.info("Applying DBSCAN clustering")
     db = DBSCAN(eps=snakemake.params.eps, min_samples=snakemake.params.min_samples).fit(X[['x', 'y']])
     X['cluster'] = db.labels_
 
     # Remove noise points
     clusters = X[X['cluster'] != -1]
+    logger.info(f"Found {len(clusters['cluster'].unique())} clusters (excluding noise)")
 
     # Calculate cluster centers weighted by population
-    logger.info("Calculating weighted cluster centers")
+    logger.info("Calculating population-weighted cluster centers")
     cluster_centers = clusters.groupby('cluster').apply(
         lambda df: pd.Series({
             'x': (df['x'] * df['population']).sum() / df['population'].sum(),
@@ -115,38 +81,47 @@ def main():
         })
     ).reset_index()
 
-    # Create GeoDataFrame for new collection points
+    # Create GeoDataFrame for cluster centers
     cluster_centers_gdf = gpd.GeoDataFrame(
         cluster_centers,
         geometry=gpd.points_from_xy(cluster_centers['x'], cluster_centers['y']),
         crs="EPSG:4326"
     )
-    
-    # Find closest potential sites
-    logger.info("Finding closest potential sites to cluster centers")
-    potential_pot = potential_sites[potential_sites["status"] == "potential"].copy()
 
-    # Reproject potential sites to EPSG:4326 if needed
+    # Filter potential sites with status "potential"
+    potential_pot = potential_sites[potential_sites["status"] == "potential"].copy()
     if potential_pot.crs != "EPSG:4326":
         potential_pot = potential_pot.to_crs("EPSG:4326")
 
     # For each cluster centre, find the closest potential location
+    logger.info("Finding closest potential sites to cluster centers")
     closest_locations = []
     for idx, centre in cluster_centers_gdf.iterrows():
-        # Compute distances from this centre to all potential sites
-        potential_pot['dist'] = potential_pot.geometry.distance(centre.geometry)
-        # Get the potential site with the minimum distance
-        min_idx = potential_pot['dist'].idxmin()
-        min_loc = potential_pot.loc[min_idx]
-        closest_locations.append({
-            'potential_ID': min_loc['ID'],
-            'geometry': min_loc.geometry
-        })
+        min_duration = float('inf')
+        min_site = None
+        
+        for _, pot_site in potential_pot.iterrows():
+            # Calculate duration using utility function
+            duration = calculate_duration(
+                (centre.geometry.x, centre.geometry.y),
+                (pot_site.geometry.x, pot_site.geometry.y)
+            )
+            
+            if duration and duration < min_duration:
+                min_duration = duration
+                min_site = pot_site
+        
+        if min_site is not None:
+            closest_locations.append({
+                'potential_ID': min_site['ID'],
+                'geometry': min_site.geometry,
+                'duration_minutes': min_duration
+            })
 
     closest_locations_gdf = gpd.GeoDataFrame(closest_locations, geometry='geometry', crs="EPSG:4326")
-    
+    logger.info(f"Found {len(closest_locations_gdf)} closest potential sites")
+
     # Create a GeoDataFrame for existing RCPs
-    logger.info("Creating output GeoDataFrame")
     existing = rcps.copy()
     existing['id'] = ['existing_' + str(i + 1) for i in range(len(existing))]
 
@@ -204,8 +179,28 @@ def main():
         ).add_to(rcp_layer)
     rcp_layer.add_to(m)
 
-    # Add flats_outside as red CircleMarkers within a FeatureGroup
-    flats_outside_layer = folium.FeatureGroup(name='Flats Outside', show=False)
+    # Add cluster centers to map
+    cluster_centers_layer = folium.FeatureGroup(name='Cluster Centers')
+    for _, row in cluster_centers_gdf.iterrows():
+        folium.Marker(
+            location=[row.geometry.y, row.geometry.x],
+            popup=f'Cluster {row.cluster}',
+            icon=folium.Icon(color='purple', icon='bullseye', prefix='fa')
+        ).add_to(cluster_centers_layer)
+    cluster_centers_layer.add_to(m)
+
+    # Add markers for each selected new site
+    new_rcp_layer = folium.FeatureGroup(name='New RCP Locations')
+    for _, row in closest_locations_gdf.iterrows():
+        folium.Marker(
+            location=[row.geometry.y, row.geometry.x],
+            popup=f'ID: {row["potential_ID"]}',
+            icon=folium.Icon(color='blue', icon='map-marker', prefix='fa')
+        ).add_to(new_rcp_layer)
+    new_rcp_layer.add_to(m)
+
+    # Add underserved flats as red CircleMarkers
+    underserved_layer = folium.FeatureGroup(name='Underserved Flats', show=False)
     for _, row in flats_outside.iterrows():
         folium.CircleMarker(
             location=[row.geometry.y, row.geometry.x],
@@ -215,24 +210,15 @@ def main():
             fill_color='red',
             fill_opacity=0.6,
             popup=f'Population: {row.est_pop:.2f}'
-        ).add_to(flats_outside_layer)
-    flats_outside_layer.add_to(m)
+        ).add_to(underserved_layer)
+    underserved_layer.add_to(m)
 
-    # Add new collection points to the map with blue + sign markers
-    new_rcp_layer = folium.FeatureGroup(name='New RCP Locations', show=False)
-    for _, point in potentials.iterrows():
-        folium.Marker(
-            location=[point.geometry.y, point.geometry.x],
-            icon=folium.Icon(color='blue', icon='plus', prefix='fa')
-        ).add_to(new_rcp_layer)
-    new_rcp_layer.add_to(m)
-
+    # Add layer control
     folium.LayerControl().add_to(m)
 
-    # Save the map to an HTML file
+    # Save the map
     m.save(snakemake.output.html_map)
-    
-    logger.info("Clustering completed successfully")
+    logger.info(f"Map saved to {snakemake.output.html_map}")
 
 if __name__ == "__main__":
     main()
