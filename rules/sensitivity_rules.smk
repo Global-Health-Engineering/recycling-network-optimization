@@ -1,5 +1,5 @@
 # Sensitivity analysis rules
-CLUSTERS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 2000]
+CLUSTERS = config["sensitivity_analysis"]["clusters"]
 
 # Target rule for sensitivity analysis
 rule run_sensitivity_analysis:
@@ -47,8 +47,8 @@ rule sensitivity_linear_optimisation:
     output:
         sites=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg"
     params:
-        num_facilities=12,
-        pop_limit=3000
+        num_facilities=config["sensitivity_analysis"]["linear_optimisation"]["num_facilities"],
+        pop_limit=config["sensitivity_analysis"]["linear_optimisation"]["pop_limit"]
     log:
         "logs/sensitivity/linear_optimization_{n_clusters}.log"
     conda:
