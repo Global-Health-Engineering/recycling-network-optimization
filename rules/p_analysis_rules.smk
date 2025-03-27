@@ -16,7 +16,8 @@ rule p_analysis_optimisation:
         sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     params:
         num_facilities= lambda wildcards: int(wildcards.p),
-        pop_limit=12000
+        pop_limit=12000,
+        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
     log:
         "logs/p-analysis/linear_optimization_{p}.log"
     conda:
@@ -30,6 +31,8 @@ rule p_analysis_distance_calculation:
         rcps=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     output:
         duration=DERIVED_DATA + "/p-analysis/flats_duration_p_{p}.gpkg"
+    params:
+        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
     log:
         "logs/p-analysis/distance_calc_{p}.log"
     conda:

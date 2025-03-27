@@ -1,45 +1,68 @@
 import geopandas as gpd
-import time
+import pandas as pd
 import numpy as np
-import scripts.util as util
+import sys
+import os
+from snakemake.logging import logger
 
-start_time = time.perf_counter()
-FLATS_PATH = snakemake.input['flats']
+# Add path to import utility functions
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.util import initialize_ball_tree, find_nearest_rcp_duration, calculate_duration
 
-# Read flats dataset and aggregate to buildings
-flats_zh = gpd.read_file(FLATS_PATH)
-flats_zh = flats_zh.to_crs("EPSG:4326")
-buildings_zh = flats_zh.groupby('egid').agg({'est_pop': 'sum', 'geometry': 'first'}).reset_index()
-buildings_agg = gpd.GeoDataFrame(buildings_zh, geometry='geometry', crs="EPSG:4326")
+# Get file paths from snakemake
+INPUT_FLATS = snakemake.input.flats
+INPUT_RCPS1 = snakemake.input.rcps1
+INPUT_RCPS2 = snakemake.input.rcps2
+INPUT_RCPS3 = snakemake.input.rcps3
 
-# List of rcp keys and corresponding output indices
-rcp_keys = ['rcps1', 'rcps2', 'rcps3']
+OUTPUT1 = snakemake.output[0]  # flats_duration_clustering_iso.gpkg
+OUTPUT2 = snakemake.output[1]  # flats_duration_clustering_ors.gpkg
+OUTPUT3 = snakemake.output[2]  # flats_duration_opt.gpkg
 
-# Valhalla routing service URL
-valhalla_url = "http://localhost:8002/route"
+# Get routing engine from params
+ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
 
-for i, key in enumerate(rcp_keys):
-    # Read the current rcp dataset and set CRS
-    rcps = gpd.read_file(snakemake.input[key])
-    rcps = rcps.to_crs("EPSG:4326")
+logger.info(f"Started calculating distances using {ROUTING_ENGINE} routing engine")
 
-    # Initialize BallTree for current rcps
-    if key == 'rcps1':
-        id_column = 'poi_id'
-    else:
-        id_column = 'id' if 'id' in rcps.columns else 'ID'
+# Load datasets
+flats = gpd.read_file(INPUT_FLATS).to_crs(epsg=4326)
+rcps1 = gpd.read_file(INPUT_RCPS1).to_crs(epsg=4326)
+rcps2 = gpd.read_file(INPUT_RCPS2).to_crs(epsg=4326)
+rcps3 = gpd.read_file(INPUT_RCPS3).to_crs(epsg=4326)
 
-    tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, id_column)
+# Process each method
+for rcps, output_path, method_name in [
+    (rcps1, OUTPUT1, "clustering_iso"),
+    (rcps2, OUTPUT2, "clustering_ors"),
+    (rcps3, OUTPUT3, "optimization")
+]:
+    logger.info(f"Processing method: {method_name}")
+    
+    # Initialize BallTree for fast nearest neighbor search
+    tree, rcp_coords, rcp_ids = initialize_ball_tree(rcps, 'id')
+    
+    # Create a copy of flats dataframe for this method
+    flats_method = flats.copy()
+    
+    # Calculate duration to nearest RCP for each flat
+    durations = []
+    for idx, flat in flats_method.iterrows():
+        nearest_id, duration = find_nearest_rcp_duration(flat.geometry, tree, rcp_coords, rcp_ids)
+        durations.append({
+            'flat_id': idx,
+            'nearest_rcp': nearest_id,
+            'duration_min': duration
+        })
+        
+        if idx % 1000 == 0:
+            logger.info(f"Processed {idx}/{len(flats_method)} flats for {method_name}")
+    
+    # Create duration dataframe and join with flats
+    duration_df = pd.DataFrame(durations)
+    flats_method = flats_method.merge(duration_df, left_index=True, right_on='flat_id', how='left')
+    
+    # Save to output file
+    flats_method.to_file(output_path, driver='GPKG')
+    logger.info(f"Saved durations for {method_name} to {output_path}")
 
-    # Copy the aggregated buildings and compute nearest rcp duration
-    buildings = buildings_agg.copy()
-    buildings['nearest_rcp_id'], buildings['duration'] = zip(*buildings['geometry'].apply(
-        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, valhalla_url)
-    ))
-
-    # Calculate impact measures
-    buildings['impact'] = buildings['est_pop'] * buildings['duration']
-    buildings['impact_log'] = np.log1p(buildings['impact'])
-
-    # Save the output for current rcp dataset
-    buildings.to_file(snakemake.output[i], driver='GPKG')
+logger.info("All distance calculations completed")
