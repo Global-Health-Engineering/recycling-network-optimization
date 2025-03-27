@@ -4,6 +4,28 @@ import folium
 import branca.colormap as cm
 from sklearn.cluster import DBSCAN
 import scripts.util as util
+import sys
+import os
+import logging
+
+# Add path to import utility functions
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.util import calculate_duration, initialize_ball_tree, find_nearest_rcp_duration
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(snakemake.log[0]),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Get routing engine from params
+ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
+logger.info(f"Using {ROUTING_ENGINE} routing engine")
 
 # 1. Data Loading
 def load_data():
@@ -59,16 +81,30 @@ def cluster_flats(flats_duration):
     ), high_pop_unserved
 
 # 5. Find Closest Potential Locations for Each Cluster Centre
-def find_closest_potential(cluster_centers, potential_sites):
+def find_closest_potential(cluster_centers, potential_sites, route_url="http://localhost:8002/route"):
     potential_pot = potential_sites[potential_sites["status"] == "potential"].copy()
     closest_locations = []
     for _, centre in cluster_centers.iterrows():
-        potential_pot['dist'] = potential_pot.geometry.distance(centre.geometry)
-        min_idx = potential_pot['dist'].idxmin()
+        # Calculate walking duration from the cluster centre to each potential site using the util function
+        potential_pot['duration'] = potential_pot.geometry.apply(
+            lambda geom: util.calculate_duration(
+                (centre.geometry.x, centre.geometry.y),
+                (geom.x, geom.y),
+                route_url
+            )
+        )
+        
+        # If no duration could be calculated, skip this centre
+        if potential_pot['duration'].isnull().all():
+            continue
+        
+        # Select the potential site with the minimal duration
+        min_idx = potential_pot['duration'].idxmin()
         min_loc = potential_pot.loc[min_idx]
         closest_locations.append({
             'potential_ID': min_loc['ID'],
-            'geometry': min_loc.geometry
+            'geometry': min_loc.geometry,
+            'duration': round(min_loc['duration'], 2) if min_loc['duration'] is not None else None
         })
     
     closest_locations_gdf = gpd.GeoDataFrame(closest_locations, geometry='geometry', crs="EPSG:4326")
