@@ -15,3 +15,40 @@ ors:
   # For local ORS instance:
   # route_url: "http://localhost:8080/ors/v2/directions/foot-walking"
   # isochrone_url: "http://localhost:8080/ors/v2/isochrones/foot-walking"
+
+# Optimization parameters
+optimization:
+  # Linear optimization parameters
+  linear_optimisation:
+    num_facilities: 12  # Number of NEW facilities to open
+  
+  # Clustering parameters
+  clustering:
+    # DBSCAN parameters
+    dbscan:
+      eps: 0.005  # Epsilon parameter for clustering
+      min_samples: 20  # Minimum samples parameter
+    
+    # ORS clustering specific parameters
+    clustering_ors:
+      iso_threshold: 10  # Threshold for underserved buildings
+
+# Data preparation parameters
+data_preparation:
+  # Population allocation parameters
+  population_allocation:
+    flats_under_construction: true
+    flats_in_planning: true
+    exclusion_buffer: 5
+    
+  # Demand points parameters
+  demand_points:
+    n_clusters: 100  # Number of clusters for demand points
+    
+  # Potential sites parameters
+  potential_sites:
+    buffer_dist_vbz: 2      # meters buffer around VBZ infrastructure
+    buffer_trees: 2         # meters buffer around trees
+    max_slope: 5            # Maximum slope in degrees
+    area_threshold: 16      # Minimum area in square meters
+    buffer_buildings: 14    # meters buffer around buildings
