@@ -4,22 +4,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 import matplotlib.ticker as mticker
+import yaml
+import os
+import sys
 
+# Add path to import utility functions
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.util import load_config
 
-# Define cluster numbers and output path
+# Load config
+config = load_config()
 
-CLUSTERS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 2000]
-DERIVED_DATA = Path("/home/silas/rcp_project/rcp_project/data/derived_data")
-PLOTS_PATH = Path("/home/silas/rcp_project/rcp_project/data/plots")
+# Get cluster numbers from config
+CLUSTERS = config["sensitivity_analysis"]["clusters"]
+
+# Get input and output files from snakemake
+duration_files = snakemake.input.duration_files
+output_summary = snakemake.output.summary
+output_plot = snakemake.output.plot
 
 # Analyze results
 results = []
-for n in CLUSTERS:
-    duration_file = DERIVED_DATA / f"sensitivity_analysis/flats_duration_{n}.gpkg"
-    if not duration_file.exists():
-        print(f"Skipping {n} - file not found")
-        continue
-        
+
+# First pass: calculate metrics for each file
+for duration_file in duration_files:
+    # Extract cluster number from filename
+    n = int(Path(duration_file).stem.split('_')[-1])
+    
     durations = gpd.read_file(duration_file)
     
     # Calculate metrics
@@ -35,8 +46,10 @@ for n in CLUSTERS:
 # Create results DataFrame
 results_df = pd.DataFrame(results)
 
-# Plot results
+# Sort by cluster count for consistent plotting
+results_df = results_df.sort_values('clusters')
 
+# Plot results
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
 ax1.plot(results_df['clusters'], results_df['avg_duration'], marker='o')
@@ -57,8 +70,7 @@ ax2.set_xlabel('Number of Demand Clusters')
 ax2.set_ylabel('Population Outside 10min')
 
 plt.tight_layout()
-plt.savefig(snakemake.output['plot'], dpi=350)
-plt.show()
+plt.savefig(output_plot, dpi=350)
 
 # Save results to CSV
-results_df.to_csv(snakemake.output['summary'], index=False)
+results_df.to_csv(output_summary, index=False)
