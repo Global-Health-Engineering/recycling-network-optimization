@@ -1,41 +1,51 @@
 import geopandas as gpd
-import logging
-from sklearn.neighbors import BallTree
+import pandas as pd
 import numpy as np
-import scripts.util as util
+import sys
+import os
+from snakemake.logging import logger
 
-# Set up logging
-logging.basicConfig(filename=snakemake.log[0], level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Add path to import utility functions
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.util import initialize_ball_tree, find_nearest_rcp_duration, calculate_duration
 
-try:
-    # Read input data
-    logger.info("Reading input data")
-    flats = gpd.read_file(snakemake.input.flats)
-    rcps = gpd.read_file(snakemake.input.rcps)
+# Get file paths from snakemake
+INPUT_FLATS = snakemake.input.flats
+INPUT_RCPS = snakemake.input.rcps
+OUTPUT_PATH = snakemake.output.duration
 
-    #convert to epsg 4326
-    flats = flats.to_crs(epsg=4326)
-    rcps = rcps.to_crs(epsg=4326)
+# Get routing engine from params
+ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
+
+logger.info(f"Started calculating distances for sensitivity analysis using {ROUTING_ENGINE}")
+
+# Load datasets
+flats = gpd.read_file(INPUT_FLATS).to_crs(epsg=4326)
+rcps = gpd.read_file(INPUT_RCPS).to_crs(epsg=4326)
+
+# Initialize BallTree for fast nearest neighbor search
+tree, rcp_coords, rcp_ids = initialize_ball_tree(rcps, 'id')
+
+# Create a copy of flats dataframe
+flats_output = flats.copy()
+
+# Calculate duration to nearest RCP for each flat
+durations = []
+for idx, flat in flats_output.iterrows():
+    nearest_id, duration = find_nearest_rcp_duration(flat.geometry, tree, rcp_coords, rcp_ids)
+    durations.append({
+        'flat_id': idx,
+        'nearest_rcp': nearest_id,
+        'duration_min': duration
+    })
     
-    # Valhalla routing service URL
-    valhalla_url = "http://localhost:8002/route"
-    
-    # Create a BallTree for efficient nearest neighbor search
-    tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, 'ID')
-    
-    # Calculate distances for each flat to nearest RCP
-    logger.info(f"Calculating distances for {len(flats)} flats")
-    buildings = flats.copy()
-    buildings['nearest_rcp_id'], buildings['duration'] = zip(*buildings['geometry'].apply(
-        lambda geom: util.find_nearest_rcp_duration(geom, tree, rcp_coords, rcp_ids, valhalla_url)
-    ))
-    
-    # Save the output
-    logger.info(f"Saving output to {snakemake.output.duration}")
-    buildings.to_file(snakemake.output.duration, driver='GPKG')
-    
-    logger.info("Distance calculation completed successfully")
-except Exception as e:
-    logger.error(f"Error in distance calculation: {e}")
-    raise
+    if idx % 1000 == 0:
+        logger.info(f"Processed {idx}/{len(flats_output)} flats")
+
+# Create duration dataframe and join with flats
+duration_df = pd.DataFrame(durations)
+flats_output = flats_output.merge(duration_df, left_index=True, right_on='flat_id', how='left')
+
+# Save to output file
+flats_output.to_file(OUTPUT_PATH, driver='GPKG')
+logger.info(f"Saved durations to {OUTPUT_PATH}")
