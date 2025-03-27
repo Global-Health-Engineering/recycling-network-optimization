@@ -31,6 +31,15 @@ distance_matrix = pd.DataFrame(
     dtype=float
 )
 
+# Create empty dataframe for the distance matrix: rows are potential site IDs and columns are demand point IDs
+demand_ids = demand_points.index.astype(str)
+facility_ids = potential_locations['ID'].astype(str)
+distance_matrix = pd.DataFrame(
+    index=facility_ids,
+    columns=demand_ids,
+    dtype=float
+)
+
 # Calculate walking distances from each demand point to each facility
 total_calculations = len(demand_points) * len(potential_locations)
 current = 0
@@ -46,8 +55,8 @@ for dp_idx, dp_row in demand_points.iterrows():
         # Calculate walking duration using utility function
         duration = calculate_duration(dp_coord, fac_coord)
         
-        # Store in distance matrix
-        distance_matrix.loc[str(dp_idx), fac_row['ID']] = duration
+        # Store in distance matrix: row is potential site ID, column is demand point index as string
+        distance_matrix.loc[str(fac_row['ID']), str(dp_idx)] = duration
         
         # Log progress
         current += 1
