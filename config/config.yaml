@@ -1,0 +1,17 @@
+# Routing engine configuration
+# Options: "valhalla" or "ors"
+routing_engine: "valhalla"
+
+# Valhalla configuration
+valhalla:
+  route_url: "http://localhost:8002/route"
+  isochrone_url: "http://localhost:8002/isochrone"
+
+# ORS configuration
+ors:
+  api_key: ""  # Add your API key here if using public ORS API
+  route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
+  isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
+  # For local ORS instance:
+  # route_url: "http://localhost:8080/ors/v2/directions/foot-walking"
+  # isochrone_url: "http://localhost:8080/ors/v2/isochrones/foot-walking"
