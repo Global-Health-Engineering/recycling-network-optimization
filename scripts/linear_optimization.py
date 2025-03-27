@@ -11,7 +11,7 @@ logger.info("Starting linear optimization...")
 
 
 def run_optimization(demand_points_path, potential_sites_path, distance_matrix_path, 
-                     output_sites_path, num_facilities=snakemake.params.num_facilites):
+                     output_sites_path, num_facilities=snakemake.params.num_facilities):
     try:
         # Load data
         demand_points = gpd.read_file(demand_points_path)
