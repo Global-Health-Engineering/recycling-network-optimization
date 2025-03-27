@@ -6,10 +6,34 @@ import requests
 from shapely.geometry import Point
 import logging
 import os
+import yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load configuration
+def load_config():
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                              "config", "config.yaml")
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
+
+config = load_config()
+ROUTING_ENGINE = config.get("routing_engine", "valhalla")
+
+# Get URLs based on selected routing engine
+def get_route_url():
+    if ROUTING_ENGINE == "valhalla":
+        return config["valhalla"]["route_url"]
+    else:
+        return config["ors"]["route_url"]
+
+def get_isochrone_url():
+    if ROUTING_ENGINE == "valhalla":
+        return config["valhalla"]["isochrone_url"]
+    else:
+        return config["ors"]["isochrone_url"]
 
 def initialize_ball_tree(rcps, identifier_column):
     """
@@ -37,7 +61,7 @@ def initialize_ball_tree(rcps, identifier_column):
     logger.info("BallTree initialized with RCP coordinates.")
     return tree, rcp_coords, rcp_ids
 
-def calculate_duration_valhalla(origin, destination, valhalla_url="http://localhost:8002/route"):
+def calculate_duration_valhalla(origin, destination, valhalla_url=None):
     """
     Calculate walking duration between origin and destination using Valhalla.
 
@@ -49,6 +73,9 @@ def calculate_duration_valhalla(origin, destination, valhalla_url="http://localh
     Returns:
     - Duration in minutes if successful, else None
     """
+    if valhalla_url is None:
+        valhalla_url = get_route_url()
+        
     try:
         # Prepare Valhalla request
         valhalla_params = {
@@ -80,6 +107,71 @@ def calculate_duration_valhalla(origin, destination, valhalla_url="http://localh
         logger.error(f"Unexpected error for origin {origin} to destination {destination}: {e}")
         return None
 
+def calculate_duration_ors(origin, destination, ors_url=None, api_key=None):
+    """
+    Calculate walking duration between origin and destination using ORS.
+
+    Parameters:
+    - origin: Tuple of (longitude, latitude)
+    - destination: Tuple of (longitude, latitude)
+    - ors_url: URL for the ORS routing service
+    - api_key: API key for ORS (if using public API)
+
+    Returns:
+    - Duration in minutes if successful, else None
+    """
+    if ors_url is None:
+        ors_url = get_route_url()
+    
+    if api_key is None and "api_key" in config["ors"]:
+        api_key = config["ors"]["api_key"]
+        
+    try:
+        # Prepare ORS request
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        
+        # Add API key if available
+        if api_key:
+            headers["Authorization"] = api_key
+            
+        ors_params = {
+            "coordinates": [
+                origin,
+                destination
+            ],
+            "units": "km",
+            "format": "json"
+        }
+        
+        # Make the request to ORS
+        response = requests.post(ors_url, json=ors_params, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Extract duration in seconds, convert to minutes
+            duration_seconds = data["routes"][0]["summary"]["duration"]
+            return duration_seconds / 60
+        else:
+            logger.error(f"ORS routing API error: Status code {response.status_code}")
+            logger.error(response.text)
+            return None
+            
+    except Exception as e:
+        logger.error(f"Unexpected error calculating ORS duration: {e}")
+        return None
+
+def calculate_duration(origin, destination, client=None, route_url=None, api_key=None):
+    """
+    Calculate walking duration using the configured routing engine.
+    """
+    if ROUTING_ENGINE == "valhalla":
+        return calculate_duration_valhalla(origin, destination, route_url)
+    else:
+        return calculate_duration_ors(origin, destination, route_url, api_key)
+
 def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url="http://localhost:8002/route", radius=5000):
     """
     Find the nearest RCP within a specified radius and calculate walking duration.
@@ -105,12 +197,12 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url
         actual_distance = dist * 6371000  # Earth radius in meters
         if actual_distance <= radius:
             rcp_coord = rcp_coords[idx]
-            duration = calculate_duration_valhalla(flat_coord, rcp_coord, valhalla_url)
+            duration = calculate_duration(flat_coord, rcp_coord, valhalla_url)
             if duration is not None:
                 return rcp_ids[idx], round(duration, 2)
     return None, None
 
-def generate_isochrone_valhalla(coord, time_limit, valhalla_url="http://localhost:8002/isochrone"):
+def generate_isochrone_valhalla(coord, time_limit, valhalla_url=None):
     """
     Generate an isochrone using Valhalla for a given coordinate and time limit.
     
@@ -122,6 +214,9 @@ def generate_isochrone_valhalla(coord, time_limit, valhalla_url="http://localhos
     Returns:
     - GeoJSON isochrone if successful, else None
     """
+    if valhalla_url is None:
+        valhalla_url = get_isochrone_url()
+        
     try:
         # Prepare Valhalla isochrone request
         valhalla_params = {
@@ -147,6 +242,69 @@ def generate_isochrone_valhalla(coord, time_limit, valhalla_url="http://localhos
     except Exception as e:
         logger.error(f"Unexpected error generating isochrone for {coord}: {e}")
         return None
+
+def generate_isochrone_ors(coord, time_limit, ors_url=None, api_key=None):
+    """
+    Generate an isochrone using ORS for a given coordinate and time limit.
+    
+    Parameters:
+    - coord: Tuple of (longitude, latitude)
+    - time_limit: Time in seconds
+    - ors_url: URL for the ORS isochrone service
+    - api_key: API key for ORS (if using public API)
+    
+    Returns:
+    - GeoJSON isochrone if successful, else None
+    """
+    if ors_url is None:
+        ors_url = get_isochrone_url()
+    
+    if api_key is None and "api_key" in config["ors"]:
+        api_key = config["ors"]["api_key"]
+        
+    try:
+        # Prepare ORS isochrone request
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        
+        # Add API key if available
+        if api_key:
+            headers["Authorization"] = api_key
+            
+        ors_params = {
+            "locations": [[coord[0], coord[1]]],
+            "range": [time_limit],  # ORS expects time in seconds
+            "units": "m",  # meters for range units
+            "location_type": "start",
+            "range_type": "time",
+            "attributes": ["area", "reachfactor"],
+            "area_units": "m"
+        }
+        
+        # Make the request to ORS
+        response = requests.post(ors_url, json=ors_params, headers=headers)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"ORS Isochrone API error: Status code {response.status_code}")
+            logger.error(response.text)
+            return None
+            
+    except Exception as e:
+        logger.error(f"Unexpected error generating isochrone for {coord}: {e}")
+        return None
+
+def generate_isochrone(coord, time_limit, isochrone_url=None, api_key=None):
+    """
+    Generate an isochrone using the configured routing engine.
+    """
+    if ROUTING_ENGINE == "valhalla":
+        return generate_isochrone_valhalla(coord, time_limit, isochrone_url)
+    else:
+        return generate_isochrone_ors(coord, time_limit, isochrone_url, api_key)
 
 # For backward compatibility, keep functions with old names but use the new implementation
 def calculate_duration(origin, destination, client=None, valhalla_url="http://localhost:8002/route"):
