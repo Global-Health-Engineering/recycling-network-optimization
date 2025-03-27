@@ -11,7 +11,7 @@ logger.info("Starting linear optimization...")
 
 
 def run_optimization(demand_points_path, potential_sites_path, distance_matrix_path, 
-                     output_sites_path, num_facilities=10, pop_limit=150):
+                     output_sites_path, num_facilities=snakemake.params.num_facilites):
     try:
         # Load data
         demand_points = gpd.read_file(demand_points_path)
@@ -20,7 +20,7 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         
         # Prepare distance matrix with lowercase IDs
         temp = matrix.copy()
-        temp['id'] = temp['ID'].str.lower()
+        temp['id']=temp['ID']
         temp['prefix'] = temp['id'].str.split('_').str[0]
         temp['numeric_id'] = temp['id'].str.split('_').str[1].astype(int)
         temp.sort_values(['prefix', 'numeric_id'], inplace=True)
@@ -74,9 +74,6 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         # Constraint: Exactly p new facilities are opened among potential sites
         prob += pulp.lpSum(y[j] for j in new_sites) == num_facilities
         
-        # Constraint: Limit the population living outside a 10-minute walking distance
-        prob += pulp.lpSum(pop[i] * x[(i, j)] for i in I for j in J 
-                          if distance_matrix.iloc[j, i] > 10) <= pop_limit
         # Try to solve with Gurobi if available, otherwise use the default solver
         start_time = time.time()
         try:
