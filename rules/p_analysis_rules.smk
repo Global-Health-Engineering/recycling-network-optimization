@@ -1,5 +1,9 @@
-# Number of facilites (p-values) to test, 1-15
-P_VALUES= range(1,31, 1)
+# Number of facilites (p-values) to test
+P_VALUES = range(
+    config["p_analysis"]["range"]["start"],
+    config["p_analysis"]["range"]["end"],
+    config["p_analysis"]["range"]["step"]
+)
 
 # Target rule for p-analysis
 rule run_p_analysis:
@@ -15,9 +19,8 @@ rule p_analysis_optimisation:
     output:
         sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
     params:
-        num_facilities= lambda wildcards: int(wildcards.p),
-        pop_limit=12000,
-        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
+        num_facilities=lambda wildcards: int(wildcards.p),
+        routing_engine=ROUTING_ENGINE
     log:
         "logs/p-analysis/linear_optimization_{p}.log"
     conda:
