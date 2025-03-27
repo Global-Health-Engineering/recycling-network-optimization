@@ -27,16 +27,16 @@ def main():
     # Calculate population weighted duration for each dataset
     logging.info("Calculating weighted durations")
     orig_weighted = (duration_orig['duration'] * duration_orig['est_pop']).sum() / duration_orig['est_pop'].sum()
-    iso_weighted = (duration_iso['duration'] * duration_iso['est_pop']).sum() / duration_iso['est_pop'].sum()
-    ors_weighted = (duration_ors['duration'] * duration_ors['est_pop']).sum() / duration_ors['est_pop'].sum()
-    opt_weighted = (duration_opt['duration'] * duration_opt['est_pop']).sum() / duration_opt['est_pop'].sum()
+    iso_weighted = (duration_iso['duration_min'] * duration_iso['est_pop']).sum() / duration_iso['est_pop'].sum()
+    ors_weighted = (duration_ors['duration_min'] * duration_ors['est_pop']).sum() / duration_ors['est_pop'].sum()
+    opt_weighted = (duration_opt['duration_min'] * duration_opt['est_pop']).sum() / duration_opt['est_pop'].sum()
     
     # Calculate population outside 10-minute range for each dataset
     logging.info("Calculating populations outside network coverage")
     orig_outside = duration_orig[duration_orig['duration'] > 10]['est_pop'].sum()
-    iso_outside = duration_iso[duration_iso['duration'] > 10]['est_pop'].sum()
-    ors_outside = duration_ors[duration_ors['duration'] > 10]['est_pop'].sum()
-    opt_outside = duration_opt[duration_opt['duration'] > 10]['est_pop'].sum()
+    iso_outside = duration_iso[duration_iso['duration_min'] > 10]['est_pop'].sum()
+    ors_outside = duration_ors[duration_ors['duration_min'] > 10]['est_pop'].sum()
+    opt_outside = duration_opt[duration_opt['duration_min'] > 10]['est_pop'].sum()
     
     # Calculate total population
     total_pop = duration_orig['est_pop'].sum()
@@ -54,13 +54,23 @@ def main():
         return f"{mins}:{secs:02d}"
     
     # Create a DataFrame with the comparison results
+    # Load RPC files to count new RCP sites for each method
+    rpc_iso = gpd.read_file(snakemake.input.rpc_iso)
+    rpc_ors = gpd.read_file(snakemake.input.rpc_ors)
+    rpc_opt = gpd.read_file(snakemake.input.rpc_opt)
+    rcp_current = gpd.read_file(snakemake.input.rcp_current)
+
+    additional_iso = len(rpc_iso)-len(rcp_current)
+    additional_ors = len(rpc_ors)-len(rcp_current)
+    additional_opt = len(rpc_opt)-len(rcp_current)
+
     comparison_df = pd.DataFrame({
-        'Method': ['Current Situation', 'Iso+Clustering', 'ORS+Clustering', "Linear Optimisation"],
+        'Method': ['Current Situation', 'Iso+Clustering', 'ORS+Clustering', 'Linear Optimisation'],
         'Population Outside 10min': [orig_outside, iso_outside, ors_outside, opt_outside],
         'Coverage (%)': [orig_coverage, iso_coverage, ors_coverage, opt_coverage],
         'Average Walking Time (min)': [format_time(orig_weighted), format_time(iso_weighted), 
                                        format_time(ors_weighted), format_time(opt_weighted)],
-        'Number of additional RCPs': [0, 10, 12, 10]
+        'Number of additional RCPs': [0, additional_iso, additional_ors, additional_opt]
     })
     
     # Save the comparison results to CSV
