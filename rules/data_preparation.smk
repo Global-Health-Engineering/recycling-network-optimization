@@ -5,9 +5,9 @@ rule allocate_population:
         flats=RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
         population=RAW_DATA + "/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp"
     params:
-        flats_under_construction=True,
-        flats_in_planning=True,
-        exclusion_buffer=5
+        flats_under_construction=config["data_preparation"]["population_allocation"]["flats_under_construction"],
+        flats_in_planning=config["data_preparation"]["population_allocation"]["flats_in_planning"],
+        exclusion_buffer=config["data_preparation"]["population_allocation"]["exclusion_buffer"]
     output:
         DERIVED_DATA + "/workflow/flats_population.gpkg"
     log:
@@ -77,11 +77,11 @@ rule generate_potential_sites:
         potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
         map=PLOTS_PATH + "/workflow/suitable_sites_map.html"
     params:
-        buffer_dist_vbz=2,  # meters buffer around VBZ infrastructure
-        buffer_trees=2,     # meters buffer around trees
-        max_slope=5,        # Maximum slope in degrees
-        area_threshold=16,  # Minimum area in square meters
-        buffer_buildings=14 # meters buffer around buildings
+        buffer_dist_vbz=config["data_preparation"]["potential_sites"]["buffer_dist_vbz"],
+        buffer_trees=config["data_preparation"]["potential_sites"]["buffer_trees"],
+        max_slope=config["data_preparation"]["potential_sites"]["max_slope"],
+        area_threshold=config["data_preparation"]["potential_sites"]["area_threshold"],
+        buffer_buildings=config["data_preparation"]["potential_sites"]["buffer_buildings"]
     log:
         "logs/generate_potential_sites.log"
     conda:
@@ -97,7 +97,7 @@ rule generate_demand_points:
         gpkg=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg",
         html_map=PLOTS_PATH + "/workflow/kmeans_clusters.html"
     params:
-        n_clusters=100  # Default value
+        n_clusters=config["data_preparation"]["demand_points"]["n_clusters"]
     conda:
         "../envs/geo_env.yaml"
     script:

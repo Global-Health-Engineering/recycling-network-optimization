@@ -11,7 +11,7 @@ rule linear_optimisation:
     output:
         sites=DERIVED_DATA + "/workflow/rcps_optimisation.gpkg"
     params:
-        num_facilities=12,   # Number of NEW facilities to open
+        num_facilities=config["optimization"]["linear_optimisation"]["num_facilities"],
         routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
     log:
         "logs/linear_optimization.log"
@@ -28,10 +28,10 @@ rule clustering_ors:
         flats_duration=DERIVED_DATA + "/workflow/flats_duration_current.gpkg",
         map_clustering_ors=PLOTS_PATH + "/workflow/map_clustering_ors.html"
     params:
-        eps=0.005,           # DBSCAN epsilon parameter for clustering
-        min_samples=20,      # DBSCAN minimum samples parameter
-        iso_threshold=10,    # Threshold for underserved buildings
-        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
+        eps=config["optimization"]["clustering"]["dbscan"]["eps"],
+        min_samples=config["optimization"]["clustering"]["dbscan"]["min_samples"],
+        iso_threshold=config["optimization"]["clustering"]["clustering_ors"]["iso_threshold"],
+        routing_engine=ROUTING_ENGINE
     log:
         "logs/spatial_clustering.log"
     conda:
@@ -50,9 +50,9 @@ rule clustering_isochrones:
         clustered_sites=DERIVED_DATA + "/workflow/rcps_clustering_iso.gpkg",
         html_map=PLOTS_PATH + "/workflow/map_clustering.html"
     params:
-        eps=0.005,          # DBSCAN epsilon parameter for clustering
-        min_samples=20,     # DBSCAN minimum samples parameter
-        routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
+        eps=config["optimization"]["clustering"]["dbscan"]["eps"],
+        min_samples=config["optimization"]["clustering"]["dbscan"]["min_samples"],
+        routing_engine=ROUTING_ENGINE
     log:
         "logs/spatial_clustering.log"
     conda:
