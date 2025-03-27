@@ -17,20 +17,15 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         demand_points = gpd.read_file(demand_points_path)
         potential_sites = gpd.read_file(potential_sites_path)
         matrix = pd.read_csv(distance_matrix_path)
-        
-        # Prepare distance matrix with lowercase IDs
-        temp = matrix.copy()
-        temp['id']=temp['ID'].astype(str)
-        temp['prefix'] = temp['id'].str.split('_').str[0]
-        temp['numeric_id'] = temp['id'].str.split('_').str[1].astype(int)
-        temp.sort_values(['prefix', 'numeric_id'], inplace=True)
-        
-        distance_matrix = temp.pivot(index='ID', columns='cluster_ID', values='Walking_Duration_Minutes')
-        distance_matrix = distance_matrix.reindex(temp['ID'].unique())
+
+        # Set the ID column as the index if it exists in the dataframe
+        if 'ID' in matrix.columns:
+            matrix = matrix.set_index('ID')
+            logger.info("Set ID column as index")
         
         # Get dimensions
-        num_demand_points = distance_matrix.shape[1]
-        num_potential_sites = distance_matrix.shape[0]
+        num_demand_points = matrix.shape[1]
+        num_potential_sites = matrix.shape[0]
         
         I = range(num_demand_points)
         J = range(num_potential_sites)
@@ -57,7 +52,7 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         x = pulp.LpVariable.dicts("Assign", [(i, j) for i in I for j in J], cat='Binary')
         
         # Objective Function: Minimize total weighted distance
-        prob += pulp.lpSum(pop[i]*(distance_matrix.iloc[j, i]) * x[(i, j)] for i in I for j in J)
+        prob += pulp.lpSum(pop[i]*(matrix.iloc[j, i]) * x[(i, j)] for i in I for j in J)
         
         # Constraint: Each demand point is assigned to exactly one facility
         for i in I:
