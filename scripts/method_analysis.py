@@ -27,14 +27,14 @@ def main():
     # Calculate population weighted duration for each dataset
     logging.info("Calculating weighted durations")
     orig_weighted = (duration_orig['duration'] * duration_orig['est_pop']).sum() / duration_orig['est_pop'].sum()
-    iso_weighted = (duration_iso['duration_min'] * duration_iso['est_pop']).sum() / duration_iso['est_pop'].sum()
+    iso_weighted = (duration_iso['duration'] * duration_iso['est_pop']).sum() / duration_iso['est_pop'].sum()
     ors_weighted = (duration_ors['duration'] * duration_ors['est_pop']).sum() / duration_ors['est_pop'].sum()
     opt_weighted = (duration_opt['duration'] * duration_opt['est_pop']).sum() / duration_opt['est_pop'].sum()
     
     # Calculate population outside 10-minute range for each dataset
     logging.info("Calculating populations outside network coverage")
     orig_outside = duration_orig[duration_orig['duration'] > 10]['est_pop'].sum()
-    iso_outside = duration_iso[duration_iso['duration_min'] > 10]['est_pop'].sum()
+    iso_outside = duration_iso[duration_iso['duration'] > 10]['est_pop'].sum()
     ors_outside = duration_ors[duration_ors['duration'] > 10]['est_pop'].sum()
     opt_outside = duration_opt[duration_opt['duration'] > 10]['est_pop'].sum()
     
