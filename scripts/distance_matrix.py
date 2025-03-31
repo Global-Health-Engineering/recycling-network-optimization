@@ -24,14 +24,6 @@ potential_locations = gpd.read_file(POT_LOC_PATH).to_crs(epsg=4326)
 demand_points = gpd.read_file(DEMAND_POINTS_PATH).to_crs(epsg=4326)
 
 # Create empty dataframe for the distance matrix
-facility_ids = potential_locations['ID'].tolist()
-distance_matrix = pd.DataFrame(
-    index=demand_points.index.astype(str),
-    columns=facility_ids,
-    dtype=float
-)
-
-# Create empty dataframe for the distance matrix: rows are potential site IDs and columns are demand point IDs
 demand_ids = demand_points.index.astype(str)
 facility_ids = potential_locations['ID'].astype(str)
 distance_matrix = pd.DataFrame(
@@ -52,7 +44,8 @@ for dp_idx, dp_row in demand_points.iterrows():
     for fac_idx, fac_row in potential_locations.iterrows():
         fac_coord = (fac_row.geometry.x, fac_row.geometry.y)
         
-        # Calculate walking duration using utility function
+        # Calculate walking duration using generic utility function
+        # No need to specify route_url or client - handled by util.py
         duration = calculate_duration(dp_coord, fac_coord)
         
         # Store in distance matrix: row is potential site ID, column is demand point index as string

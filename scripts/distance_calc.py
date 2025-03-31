@@ -1,23 +1,21 @@
 import geopandas as gpd
 import pandas as pd
-import numpy as np
 import sys
 import os
 from snakemake.logging import logger
 
 # Add path to import utility functions
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from scripts.util import initialize_ball_tree, find_nearest_rcp_duration, calculate_duration
+from scripts.util import initialize_ball_tree, find_nearest_rcp_duration
 
 # Get file paths from snakemake
 INPUT_FLATS = snakemake.input.flats
 INPUT_RCPS1 = snakemake.input.rcps1
 INPUT_RCPS2 = snakemake.input.rcps2
 INPUT_RCPS3 = snakemake.input.rcps3
-
-OUTPUT1 = snakemake.output[0]  # flats_duration_clustering_iso.gpkg
-OUTPUT2 = snakemake.output[1]  # flats_duration_clustering_ors.gpkg
-OUTPUT3 = snakemake.output[2]  # flats_duration_opt.gpkg
+OUTPUT1 = snakemake.output.output1
+OUTPUT2 = snakemake.output.output2
+OUTPUT3 = snakemake.output.output3
 
 # Get routing engine from params
 ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
@@ -47,6 +45,7 @@ for rcps, output_path, method_name in [
     # Calculate duration to nearest RCP for each flat
     durations = []
     for idx, flat in flats_method.iterrows():
+        # No need to specify valhalla_url - handled by util.py
         nearest_id, duration = find_nearest_rcp_duration(flat.geometry, tree, rcp_coords, rcp_ids)
         durations.append({
             'flat_id': idx,
