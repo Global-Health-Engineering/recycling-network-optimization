@@ -1,6 +1,6 @@
 # Routing engine configuration
 # Options: "valhalla" or "ors"
-routing_engine: "valhalla"
+routing_engine: "ors"
 
 # Valhalla configuration
 valhalla:
@@ -9,12 +9,12 @@ valhalla:
 
 # ORS configuration
 ors:
-  api_key: ""  # Add your API key here if using public ORS API
-  route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
-  isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
-  # For local ORS instance:
-  # route_url: "http://localhost:8080/ors/v2/directions/foot-walking"
-  # isochrone_url: "http://localhost:8080/ors/v2/isochrones/foot-walking"
+  #api_key: ""  # Add your API key here if using public ORS API
+  #route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
+  #isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
+  For local ORS instance:
+  route_url: "http://localhost:8080/ors/v2/directions/foot-walking"
+  isochrone_url: "http://localhost:8080/ors/v2/isochrones/foot-walking"
 
 # Optimization parameters
 optimization:
@@ -43,7 +43,7 @@ data_preparation:
     
   # Demand points parameters
   demand_points:
-    n_clusters: 100  # Number of clusters for demand points
+    n_clusters: 1000  # Number of clusters for demand points
     
   # Potential sites parameters
   potential_sites:
