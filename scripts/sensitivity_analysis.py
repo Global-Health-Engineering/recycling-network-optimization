@@ -34,8 +34,8 @@ for duration_file in duration_files:
     durations = gpd.read_file(duration_file)
     
     # Calculate metrics
-    avg_duration = (durations['duration'] * durations['est_pop']).sum() / durations['est_pop'].sum()
-    pop_outside_10min = durations[durations['duration'] > 10]['est_pop'].sum()
+    avg_duration = (durations['duration_min'] * durations['est_pop']).sum() / durations['est_pop'].sum()
+    pop_outside_10min = durations[durations['duration_min'] > 10]['est_pop'].sum()
     
     results.append({
         'clusters': n,
@@ -53,7 +53,7 @@ results_df = results_df.sort_values('clusters')
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
 ax1.plot(results_df['clusters'], results_df['avg_duration'], marker='o')
-ax1.set_title('Average Walking Duration by Cluster Count')
+ax1.set_title(r'Average Walking Duration by $n_{clusters}$')
 ax1.set_xlabel('Number of Demand Clusters')
 ax1.set_ylabel('Weighted Average Duration (min:s)')
 
@@ -65,7 +65,7 @@ def format_min_sec(x, pos):
 ax1.yaxis.set_major_formatter(mticker.FuncFormatter(format_min_sec))
 
 ax2.plot(results_df['clusters'], results_df['pop_outside_10min'], marker='o')
-ax2.set_title('Population Outside 10min by Cluster Count')
+ax2.set_title(r'Population Outside 10min by $n_clusters$')
 ax2.set_xlabel('Number of Demand Clusters')
 ax2.set_ylabel('Population Outside 10min')
 
