@@ -55,14 +55,14 @@ def main():
     
     # Create a DataFrame with the comparison results
     # Load RPC files to count new RCP sites for each method
-    rpc_iso = gpd.read_file(snakemake.input.rpc_iso)
-    rpc_ors = gpd.read_file(snakemake.input.rpc_ors)
-    rpc_opt = gpd.read_file(snakemake.input.rpc_opt)
+    rcp_iso = gpd.read_file(snakemake.input.rcp_iso)
+    rcp_ors = gpd.read_file(snakemake.input.rcp_ors)
+    rcp_opt = gpd.read_file(snakemake.input.rcp_opt)
     rcp_current = gpd.read_file(snakemake.input.rcp_current)
 
-    additional_iso = len(rpc_iso)-len(rcp_current)
-    additional_ors = len(rpc_ors)-len(rcp_current)
-    additional_opt = len(rpc_opt)-len(rcp_current)
+    additional_iso = len(rcp_iso)-len(rcp_current)
+    additional_ors = len(rcp_ors)-len(rcp_current)
+    additional_opt = len(rcp_opt)-len(rcp_current)
 
     comparison_df = pd.DataFrame({
         'Method': ['Current Situation', 'Iso+Clustering', 'ORS+Clustering', 'Linear Optimisation'],
