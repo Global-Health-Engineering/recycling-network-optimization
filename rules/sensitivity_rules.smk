@@ -48,7 +48,6 @@ rule sensitivity_linear_optimisation:
         sites=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg"
     params:
         num_facilities=config["sensitivity_analysis"]["linear_optimisation"]["num_facilities"],
-        pop_limit=config["sensitivity_analysis"]["linear_optimisation"]["pop_limit"]
     log:
         "logs/sensitivity/linear_optimization_{n_clusters}.log"
     conda:
