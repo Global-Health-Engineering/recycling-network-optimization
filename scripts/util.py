@@ -3,10 +3,15 @@
 import numpy as np
 from sklearn.neighbors import BallTree
 import requests
-from shapely.geometry import Point
+from shapely.geometry import Point, shape
 import logging
 import os
 import yaml
+import openrouteservice as ors
+from openrouteservice.exceptions import ApiError
+import geopandas as gpd
+import pandas as pd
+from shapely.ops import unary_union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +26,33 @@ def load_config():
 
 config = load_config()
 ROUTING_ENGINE = config.get("routing_engine", "valhalla")
+
+# Initialize ORS client
+def get_ors_client():
+    """
+    Initialize and return an OpenRouteService client
+    """
+    try:
+        # Check if API key is available in config or environment
+        api_key = config.get("ors", {}).get("api_key", "")
+        if not api_key:
+            api_key = os.environ.get('ORS_API_KEY', "")
+            
+        # Set the base URL (use default if not specified)
+        base_url = config.get("ors", {}).get("route_url", "http://localhost:8080/ors")
+        if base_url.startswith("'") and base_url.endswith("'"):
+            base_url = base_url[1:-1]  # Remove quotes
+            
+        # If API key is provided, use public ORS instance
+        if api_key:
+            client = ors.Client(key=api_key)
+        else:
+            # Otherwise use local instance
+            client = ors.Client(base_url=base_url)
+        return client
+    except Exception as e:
+        logger.error(f"Failed to initialize ORS client: {e}")
+        return None
 
 # Get URLs based on selected routing engine
 def get_route_url():
@@ -109,56 +141,46 @@ def calculate_duration_valhalla(origin, destination, valhalla_url=None):
 
 def calculate_duration_ors(origin, destination, ors_url=None, api_key=None):
     """
-    Calculate walking duration between origin and destination using ORS.
-
-    Parameters:
-    - origin: Tuple of (longitude, latitude)
-    - destination: Tuple of (longitude, latitude)
-    - ors_url: URL for the ORS routing service
-    - api_key: API key for ORS (if using public API)
-
-    Returns:
-    - Duration in minutes if successful, else None
-    """
-    if ors_url is None:
-        ors_url = get_route_url()
+    Calculate walking duration between two points using OpenRouteService Python client.
     
-    if api_key is None and "api_key" in config["ors"]:
-        api_key = config["ors"]["api_key"]
-        
+    Args:
+        origin: (lon, lat) tuple or Point object
+        destination: (lon, lat) tuple or Point object
+        ors_url: URL for ORS API (used only if not using client)
+        api_key: ORS API key (used only if not using client)
+    
+    Returns:
+        Duration in minutes or None if calculation failed
+    """
     try:
-        # Prepare ORS request
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        # Convert Point objects to coordinate tuples if needed
+        if isinstance(origin, Point):
+            origin = (origin.x, origin.y)
+        if isinstance(destination, Point):
+            destination = (destination.x, destination.y)
         
-        # Add API key if available
-        if api_key:
-            headers["Authorization"] = api_key
-            
-        ors_params = {
-            "coordinates": [
-                origin,
-                destination
-            ],
-            "units": "km",
-            "format": "json"
-        }
-        
-        # Make the request to ORS
-        response = requests.post(ors_url, json=ors_params, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            # Extract duration in seconds, convert to minutes
-            duration_seconds = data["routes"][0]["summary"]["duration"]
-            return duration_seconds / 60
-        else:
-            logger.error(f"ORS routing API error: Status code {response.status_code}")
-            logger.error(response.text)
+        # Get ORS client
+        client = get_ors_client()
+        if client is None:
+            logger.error("Failed to initialize ORS client")
             return None
             
+        # Request directions using the Python client
+        route = client.directions(
+            coordinates=[origin, destination],
+            profile='foot-walking',
+            format='geojson',
+            units='m',
+            optimize_waypoints=False
+        )
+        
+        # Extract and return duration in minutes
+        duration_seconds = route['features'][0]['properties']['summary']['duration']
+        return duration_seconds / 60  # Convert to minutes
+        
+    except ApiError as e:
+        logger.error(f"ORS API error: {e}")
+        return None
     except Exception as e:
         logger.error(f"Unexpected error calculating ORS duration: {e}")
         return None
@@ -174,33 +196,31 @@ def calculate_duration(origin, destination, client=None, route_url=None, api_key
 
 def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url="http://localhost:8002/route", radius=5000):
     """
-    Find the nearest RCP within a specified radius and calculate walking duration.
-
-    Parameters:
-    - flat_geom: Shapely geometry of the flat
-    - tree: BallTree instance with RCP coordinates
-    - rcp_coords: List of RCP (longitude, latitude) tuples
-    - rcp_ids: List of RCP identifiers
-    - valhalla_url: URL for the Valhalla routing service
-    - radius: Search radius in meters (default: 5000)
-
-    Returns:
-    - Tuple of (rcp_id, duration_min)
+    Find the nearest recycling point and calculate duration.
+    Compatible with both Valhalla and ORS.
     """
-    flat_coord = (flat_geom.x, flat_geom.y)
-    flat_rad = np.radians([flat_coord[::-1]])  # [lat, lon] in radians
-
-    # Query for the top 5 nearest RCPs
-    distance, index = tree.query(flat_rad, k=5)
-
-    for dist, idx in zip(distance[0], index[0]):
-        actual_distance = dist * 6371000  # Earth radius in meters
-        if actual_distance <= radius:
-            rcp_coord = rcp_coords[idx]
-            duration = calculate_duration(flat_coord, rcp_coord, valhalla_url)
-            if duration is not None:
-                return rcp_ids[idx], round(duration, 2)
-    return None, None
+    try:
+        # Get flat coordinates
+        if isinstance(flat_geom, Point):
+            flat_coord = (flat_geom.x, flat_geom.y)
+        else:
+            flat_coord = (flat_geom.x, flat_geom.y)
+        
+        # Query the ball tree for nearest points
+        distance, index = tree.query([[flat_coord[1], flat_coord[0]]], k=5)
+        
+        for dist, idx in zip(distance[0], index[0]):
+            actual_distance = dist * 6371000  # Earth radius in meters
+            if actual_distance <= radius:
+                rcp_coord = rcp_coords[idx]
+                duration = calculate_duration(flat_coord, rcp_coord, valhalla_url)
+                if duration is not None:
+                    return rcp_ids[idx], round(duration, 2)
+        return None, None
+        
+    except Exception as e:
+        logger.error(f"Error finding nearest RCP: {e}")
+        return None, None
 
 def generate_isochrone_valhalla(coord, time_limit, valhalla_url=None):
     """
@@ -245,54 +265,39 @@ def generate_isochrone_valhalla(coord, time_limit, valhalla_url=None):
 
 def generate_isochrone_ors(coord, time_limit, ors_url=None, api_key=None):
     """
-    Generate an isochrone using ORS for a given coordinate and time limit.
+    Generate an isochrone using OpenRouteService Python client.
     
-    Parameters:
-    - coord: Tuple of (longitude, latitude)
-    - time_limit: Time in seconds
-    - ors_url: URL for the ORS isochrone service
-    - api_key: API key for ORS (if using public API)
+    Args:
+        coord: (lon, lat) tuple
+        time_limit: time in seconds
+        ors_url: URL for ORS API (used only if not using client)
+        api_key: ORS API key (used only if not using client)
     
     Returns:
-    - GeoJSON isochrone if successful, else None
+        GeoJSON response or None if generation failed
     """
-    if ors_url is None:
-        ors_url = get_isochrone_url()
-    
-    if api_key is None and "api_key" in config["ors"]:
-        api_key = config["ors"]["api_key"]
-        
     try:
-        # Prepare ORS isochrone request
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
-        
-        # Add API key if available
-        if api_key:
-            headers["Authorization"] = api_key
-            
-        ors_params = {
-            "locations": [[coord[0], coord[1]]],
-            "range": [time_limit],  # ORS expects time in seconds
-            "units": "m",  # meters for range units
-            "location_type": "start",
-            "range_type": "time",
-            "attributes": ["area", "reachfactor"],
-            "area_units": "m"
-        }
-        
-        # Make the request to ORS
-        response = requests.post(ors_url, json=ors_params, headers=headers)
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            logger.error(f"ORS Isochrone API error: Status code {response.status_code}")
-            logger.error(response.text)
+        # Get ORS client
+        client = get_ors_client()
+        if client is None:
+            logger.error("Failed to initialize ORS client")
             return None
-            
+        
+        # Generate isochrone using the Python client
+        isochrone = client.isochrones(
+            locations=[[coord[0], coord[1]]],
+            profile='foot-walking',
+            range=[time_limit],  # time in seconds
+            attributes=['area', 'reachfactor'],
+            units='m',
+            location_type='start',
+        )
+        
+        return isochrone
+        
+    except ApiError as e:
+        logger.error(f"ORS Isochrone API error: {e}")
+        return None
     except Exception as e:
         logger.error(f"Unexpected error generating isochrone for {coord}: {e}")
         return None
@@ -305,18 +310,6 @@ def generate_isochrone(coord, time_limit, isochrone_url=None, api_key=None):
         return generate_isochrone_valhalla(coord, time_limit, isochrone_url)
     else:
         return generate_isochrone_ors(coord, time_limit, isochrone_url, api_key)
-
-# For backward compatibility, keep functions with old names but use the new implementation
-def calculate_duration(origin, destination, client=None, valhalla_url="http://localhost:8002/route"):
-    """
-    Backward compatibility function that uses Valhalla instead of ORS.
-    """
-    return calculate_duration_valhalla(origin, destination, valhalla_url)
-
-# Placeholder to maintain compatibility with the merge_isochrones_preserve_time function
-import geopandas as gpd
-import pandas as pd
-from shapely.ops import unary_union
 
 def merge_isochrones_preserve_time(isochrones_gdf):
     """
