@@ -9,12 +9,13 @@ valhalla:
 
 # ORS configuration
 ors:
-  #api_key: ""  # Add your API key here if using public ORS API
-  #route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
-  #isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
-  For local ORS instance:
-  route_url: "http://localhost:8080/ors/v2/directions/foot-walking"
-  isochrone_url: "http://localhost:8080/ors/v2/isochrones/foot-walking"
+  api_key: ""  # Add your API key here if using public ORS API
+  # Public ORS instance (requires API key):
+  # route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
+  # isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
+  # For local ORS instance:
+  route_url: "'http://localhost:8080/ors'"
+  isochrone_url: "'http://localhost:8080/ors'"
 
 # Optimization parameters
 optimization:
@@ -60,11 +61,15 @@ sensitivity_analysis:
   # Linear optimisation parameters for sensitivity analysis
   linear_optimisation:
     num_facilities: 12  # Number of facilities to open
+    pop_limit: 3000     # Population limit per facility
 
 # P-analysis parameters
 p_analysis:
+  # Range parameters for p-values
   range:
     start: 1   # Starting value
     end: 31    # Ending value (exclusive)
     step: 1    # Step size
-  
+  # Linear optimisation parameters for p-analysis
+  linear_optimisation:
+    pop_limit: 12000  # Population limit per facility
