@@ -13,9 +13,10 @@ INPUT_FLATS = snakemake.input.flats
 INPUT_RCPS1 = snakemake.input.rcps1
 INPUT_RCPS2 = snakemake.input.rcps2
 INPUT_RCPS3 = snakemake.input.rcps3
-OUTPUT1 = snakemake.output.output1
-OUTPUT2 = snakemake.output.output2
-OUTPUT3 = snakemake.output.output3
+
+OUTPUT1 = snakemake.output[0]
+OUTPUT2 = snakemake.output[1]
+OUTPUT3 = snakemake.output[2]
 
 # Get routing engine from params
 ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
