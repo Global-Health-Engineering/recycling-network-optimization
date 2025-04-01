@@ -24,7 +24,7 @@ ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
 logger.info(f"Using {ROUTING_ENGINE} routing engine for isochrones")
 
 # Time limits in seconds
-TIME_LIMITS = [300, 600]  # 5 and 10 minutes
+TIME_LIMITS = [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  # 1 to 10 minutes
 
 # Initialize ORS client if using ORS
 ors_client = None
@@ -55,7 +55,6 @@ for idx, rcp in rcps.iterrows():
                     locations=[[point_coord[0], point_coord[1]]],
                     profile='foot-walking',
                     range=[time_limit],  # time in seconds
-                    attributes=['area', 'reachfactor'],
                     units='m',
                     location_type='start',
                 )
