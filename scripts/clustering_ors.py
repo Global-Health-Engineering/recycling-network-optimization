@@ -42,54 +42,32 @@ def aggregate_flats(flats):
 
 # 3. Compute Nearest RCP Durations
 def compute_nearest_durations(buildings, rcps, route_url="http://localhost:8002/route"):
+
+    # Initialize the OpenRouteService client
+    if ROUTING_ENGINE == "ors":
+        try:
+            ors_client = get_ors_client()
+        except ApiError as e:
+            logger.error(f"ORS API error: {e}")
+            raise
+    # Prepare RCPs for nearest neighbor search
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, 'poi_id')
     durations = buildings.copy()
-    
-    # Initialize ORS client if using ORS
-    ors_client = None
+
     if ROUTING_ENGINE == "ors":
-        ors_client = get_ors_client()
-        logger.info("Using OpenRouteService client for duration calculations")
-    
-    # Process each building
+     logger.info("Calculating durations using OpenRouteService")
+    else:
+     logger.info("Calculating durations using Valhalla")
+     
+    # Process each building to find its nearest RCP and the associated duration
     results = []
     for _, building in buildings.iterrows():
-        if ROUTING_ENGINE == "valhalla":
-            # Use existing function for Valhalla
-            nearest_id, duration = find_nearest_rcp_duration(
-                building.geometry, tree, rcp_coords, rcp_ids, route_url)
-        else:
-            # Use ORS client
-            try:
-                flat_coord = (building.geometry.x, building.geometry.y)
-                distance, index = tree.query([[flat_coord[1], flat_coord[0]]], k=5)
-                
-                nearest_id, duration = None, None
-                for dist, idx in zip(distance[0], index[0]):
-                    actual_distance = dist * 6371000  # Earth radius in meters
-                    if actual_distance <= 5000:  # 5km radius
-                        rcp_coord = rcp_coords[idx]
-                        try:
-                            route = ors_client.directions(
-                                coordinates=[[flat_coord[0], flat_coord[1]], 
-                                            [rcp_coord[0], rcp_coord[1]]],
-                                profile='foot-walking',
-                                format='geojson'
-                            )
-                            duration_seconds = route['features'][0]['properties']['summary']['duration']
-                            duration_minutes = duration_seconds / 60
-                            nearest_id = rcp_ids[idx]
-                            duration = round(duration_minutes, 2)
-                            break
-                        except Exception as e:
-                            logger.warning(f"Error calculating route: {e}")
-                            continue
-            except Exception as e:
-                logger.error(f"Error finding nearest RCP: {e}")
-                nearest_id, duration = None, None
-                
+        # This utility call will use the correct routing engine based on the provided route_url
+        nearest_id, duration = util.find_nearest_rcp_duration(
+          building.geometry, tree, rcp_coords, rcp_ids, route_url
+        )
         results.append((nearest_id, duration))
-    
+
     durations['nearest_rcp_id'] = [r[0] for r in results]
     durations['duration'] = [r[1] for r in results]
     return gpd.GeoDataFrame(durations, geometry='geometry', crs="EPSG:4326")
@@ -132,41 +110,17 @@ def find_closest_potential(cluster_centers, potential_sites, route_url="http://l
     potential_pot = potential_sites[potential_sites["status"] == "potential"].copy()
     closest_locations = []
     
-    # Initialize ORS client if using ORS
-    ors_client = None
-    if ROUTING_ENGINE == "ors":
-        ors_client = get_ors_client()
-    
     for _, centre in cluster_centers.iterrows():
         centre_coords = (centre.geometry.x, centre.geometry.y)
         
-        if ROUTING_ENGINE == "valhalla":
-            # Use existing approach for Valhalla
-            potential_pot['duration'] = potential_pot.geometry.apply(
-                lambda geom: util.calculate_duration(
-                    centre_coords,
-                    (geom.x, geom.y),
-                    route_url
-                )
-            )
-        else:
-            # Use ORS client for each potential site
-            durations = []
-            for idx, site in potential_pot.iterrows():
-                try:
-                    site_coords = [site.geometry.x, site.geometry.y]
-                    route = ors_client.directions(
-                        coordinates=[[centre_coords[0], centre_coords[1]], site_coords],
-                        profile='foot-walking',
-                        format='geojson'
-                    )
-                    duration_seconds = route['features'][0]['properties']['summary']['duration']
-                    durations.append(duration_seconds / 60)  # Convert to minutes
-                except Exception as e:
-                    logger.warning(f"Error calculating route to potential site: {e}")
-                    durations.append(None)
-            
-            potential_pot['duration'] = durations
+        # Calculate durations for all potential sites
+        durations = []
+        for idx, site in potential_pot.iterrows():
+            site_coords = (site.geometry.x, site.geometry.y)
+            duration = util.calculate_duration(centre_coords, site_coords, route_url=route_url)
+            durations.append(duration)
+        
+        potential_pot['duration'] = durations
         
         # If no duration could be calculated, skip this centre
         if potential_pot['duration'].isnull().all():
@@ -268,7 +222,6 @@ def main():
     # Determine route URL based on routing engine
     route_url = "http://localhost:8002/route"  # Default for Valhalla
     if ROUTING_ENGINE == "ors":
-        # For ORS, this is just a placeholder as we'll use the client
         route_url = util.get_route_url()
     
     # Compute durations and export

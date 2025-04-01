@@ -33,23 +33,16 @@ def get_ors_client():
     Initialize and return an OpenRouteService client
     """
     try:
-        # Check if API key is available in config or environment
-        api_key = config.get("ors", {}).get("api_key", "")
-        if not api_key:
-            api_key = os.environ.get('ORS_API_KEY', "")
-            
         # Set the base URL (use default if not specified)
         base_url = config.get("ors", {}).get("route_url", "http://localhost:8080/ors")
         if base_url.startswith("'") and base_url.endswith("'"):
             base_url = base_url[1:-1]  # Remove quotes
             
-        # If API key is provided, use public ORS instance
-        if api_key:
-            client = ors.Client(key=api_key)
-        else:
-            # Otherwise use local instance
-            client = ors.Client(base_url=base_url)
+        # Otherwise use local instance
+        client = ors.Client(base_url=base_url)
+        logger.info(f"Using local OpenRouteService instance at {base_url}")
         return client
+
     except Exception as e:
         logger.error(f"Failed to initialize ORS client: {e}")
         return None
@@ -139,7 +132,7 @@ def calculate_duration_valhalla(origin, destination, valhalla_url=None):
         logger.error(f"Unexpected error for origin {origin} to destination {destination}: {e}")
         return None
 
-def calculate_duration_ors(origin, destination, ors_url=None, api_key=None):
+def calculate_duration_ors(origin, destination):
     """
     Calculate walking duration between two points using OpenRouteService Python client.
     
@@ -171,7 +164,6 @@ def calculate_duration_ors(origin, destination, ors_url=None, api_key=None):
             profile='foot-walking',
             format='geojson',
             units='m',
-            optimize_waypoints=False
         )
         
         # Extract and return duration in minutes
@@ -201,21 +193,19 @@ def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url
     """
     try:
         # Get flat coordinates
-        if isinstance(flat_geom, Point):
-            flat_coord = (flat_geom.x, flat_geom.y)
-        else:
-            flat_coord = (flat_geom.x, flat_geom.y)
-        
+        flat_coord = (flat_geom.x, flat_geom.y)
+        flat_rad = np.radians([flat_coord[::-1]])  # [lat, lon] in radians
+
         # Query the ball tree for nearest points
-        distance, index = tree.query([[flat_coord[1], flat_coord[0]]], k=5)
-        
+        distance, index = tree.query(flat_rad, k=5)
+
         for dist, idx in zip(distance[0], index[0]):
             actual_distance = dist * 6371000  # Earth radius in meters
-            if actual_distance <= radius:
-                rcp_coord = rcp_coords[idx]
-                duration = calculate_duration(flat_coord, rcp_coord, valhalla_url)
-                if duration is not None:
-                    return rcp_ids[idx], round(duration, 2)
+        if actual_distance <= radius:
+            rcp_coord = rcp_coords[idx]
+            duration = calculate_duration(flat_coord, rcp_coord, valhalla_url)
+            if duration is not None:
+                return rcp_ids[idx], round(duration, 2)
         return None, None
         
     except Exception as e:
@@ -363,17 +353,17 @@ if __name__ == "__main__":
         import geopandas as gpd
 
         # Example paths (update these paths as needed)
-        rcp_shapefile_path = '/home/silas/projects/msc_thesis/data/raw_data/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp'
+        rcp_shapefile_path = '/home/silas/rcp_project/rcp_project/data/raw_data/geodata_stadt_Zuerich/recycling_sammelstellen/data/stzh.poi_sammelstelle_view.shp'
 
         # Load RCPs GeoDataFrame
         rcps = gpd.read_file(rcp_shapefile_path)
         rcps = rcps.to_crs("EPSG:4326")  # Ensure CRS is WGS84
 
         # Initialize BallTree
-        tree, rcp_coords, rcp_ids = initialize_ball_tree(rcps)
+        tree, rcp_coords, rcp_ids = initialize_ball_tree(rcps, 'poi_id')
 
         # Example flat geometry (replace with actual data)
-        example_flat_geom = Point(8.5417, 47.3769)  # Longitude, Latitude for Zurich
+        example_flat_geom = Point(8.5591, 47.3783)  # Longitude, Latitude for Zurich
 
         # Find nearest RCP and duration
         rcp_id, duration = find_nearest_rcp_duration(example_flat_geom, tree, rcp_coords, rcp_ids)
