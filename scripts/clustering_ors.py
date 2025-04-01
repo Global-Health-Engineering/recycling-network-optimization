@@ -25,9 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Get routing engine from params
-ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
-logger.info(f"Using {ROUTING_ENGINE} routing engine")
 
 # 1. Data Loading
 def load_data():
@@ -43,22 +40,10 @@ def aggregate_flats(flats):
 # 3. Compute Nearest RCP Durations
 def compute_nearest_durations(buildings, rcps, route_url="http://localhost:8002/route"):
 
-    # Initialize the OpenRouteService client
-    if ROUTING_ENGINE == "ors":
-        try:
-            ors_client = get_ors_client()
-        except ApiError as e:
-            logger.error(f"ORS API error: {e}")
-            raise
     # Prepare RCPs for nearest neighbor search
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, 'poi_id')
     durations = buildings.copy()
 
-    if ROUTING_ENGINE == "ors":
-     logger.info("Calculating durations using OpenRouteService")
-    else:
-     logger.info("Calculating durations using Valhalla")
-     
     # Process each building to find its nearest RCP and the associated duration
     results = []
     for _, building in buildings.iterrows():
@@ -221,8 +206,6 @@ def main():
     
     # Determine route URL based on routing engine
     route_url = "http://localhost:8002/route"  # Default for Valhalla
-    if ROUTING_ENGINE == "ors":
-        route_url = util.get_route_url()
     
     # Compute durations and export
     flats_duration = compute_nearest_durations(buildings, rcps, route_url)
