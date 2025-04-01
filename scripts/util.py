@@ -40,7 +40,6 @@ def get_ors_client():
             
         # Otherwise use local instance
         client = ors.Client(base_url=base_url)
-        logger.info(f"Using local OpenRouteService instance at {base_url}")
         return client
 
     except Exception as e:
@@ -80,6 +79,7 @@ def initialize_ball_tree(rcps, identifier_column):
     # Convert coordinates to radians for BallTree ([lat, lon])
     rcp_coords_rad = np.radians([coord[::-1] for coord in rcp_coords])  # [lat, lon]
 
+# 2. Aggregating Flats by Building
     # Build BallTree for efficient nearest neighbor search
     tree = BallTree(rcp_coords_rad, metric='haversine')
 
@@ -146,12 +146,6 @@ def calculate_duration_ors(origin, destination):
         Duration in minutes or None if calculation failed
     """
     try:
-        # Convert Point objects to coordinate tuples if needed
-        if isinstance(origin, Point):
-            origin = (origin.x, origin.y)
-        if isinstance(destination, Point):
-            destination = (destination.x, destination.y)
-        
         # Get ORS client
         client = get_ors_client()
         if client is None:
@@ -163,7 +157,6 @@ def calculate_duration_ors(origin, destination):
             coordinates=[origin, destination],
             profile='foot-walking',
             format='geojson',
-            units='m',
         )
         
         # Extract and return duration in minutes
@@ -173,9 +166,6 @@ def calculate_duration_ors(origin, destination):
     except ApiError as e:
         logger.error(f"ORS API error: {e}")
         return None
-    except Exception as e:
-        logger.error(f"Unexpected error calculating ORS duration: {e}")
-        return None
 
 def calculate_duration(origin, destination, client=None, route_url=None, api_key=None):
     """
@@ -184,7 +174,7 @@ def calculate_duration(origin, destination, client=None, route_url=None, api_key
     if ROUTING_ENGINE == "valhalla":
         return calculate_duration_valhalla(origin, destination, route_url)
     else:
-        return calculate_duration_ors(origin, destination, route_url, api_key)
+        return calculate_duration_ors(origin, destination)
 
 def find_nearest_rcp_duration(flat_geom, tree, rcp_coords, rcp_ids, valhalla_url="http://localhost:8002/route", radius=5000):
     """
@@ -278,9 +268,10 @@ def generate_isochrone_ors(coord, time_limit, ors_url=None, api_key=None):
             locations=[[coord[0], coord[1]]],
             profile='foot-walking',
             range=[time_limit],  # time in seconds
-            attributes=['area', 'reachfactor'],
-            units='m',
             location_type='start',
+            unit='m',
+            range_type='time',
+            smoothing=0.3,
         )
         
         return isochrone
