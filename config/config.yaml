@@ -9,13 +9,8 @@ valhalla:
 
 # ORS configuration
 ors:
-  api_key: ""  # Add your API key here if using public ORS API
-  # Public ORS instance (requires API key):
-  # route_url: "https://api.openrouteservice.org/v2/directions/foot-walking"
-  # isochrone_url: "https://api.openrouteservice.org/v2/isochrones/foot-walking"
-  # For local ORS instance:
-  route_url: "'http://localhost:8080/ors'"
-  isochrone_url: "'http://localhost:8080/ors'"
+  route_url: "http://localhost:8080/ors"
+  isochrone_url: "http://localhost:8080/ors"
 
 # Optimization parameters
 optimization:
