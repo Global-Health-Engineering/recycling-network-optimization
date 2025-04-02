@@ -22,10 +22,7 @@ for i, key in enumerate(rcp_keys):
     rcps = rcps.to_crs("EPSG:4326")
 
     # Initialize BallTree for current rcps and ORS client
-    if key == 'rcps1':
-        id_column = 'poi_id'
-    else:
-        id_column = 'id' if 'id' in rcps.columns else 'ID'
+    id_column = 'poi_id' if 'poi_id' in rcps.columns else 'id' if 'id' in rcps.columns else 'ID'
 
     tree, rcp_coords, rcp_ids = util.initialize_ball_tree(rcps, id_column)
 
