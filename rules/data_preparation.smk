@@ -5,8 +5,8 @@ rule allocate_population:
         flats=RAW_DATA + "/geodata_stadt_Zuerich/building_stats/data/ssz.gwr_stzh_wohnungen.shp",
         population=RAW_DATA + "/geodata_stadt_Zuerich/Raumliche_Bevolkerungsstatistik_-OGD/BEVOELKERUNG_HA_F.shp"
     params:
-        flats_under_construction=True,
-        flats_in_planning=True,
+        flats_under_construction=False,
+        flats_in_planning=False,
         exclusion_buffer=5
     output:
         DERIVED_DATA + "/workflow/flats_population.gpkg"
