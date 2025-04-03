@@ -73,7 +73,7 @@ rule compare_methods:
         comparison_csv=DERIVED_DATA + "/workflow/method_comparison.csv",
         comparison_plot=PLOTS_PATH + "/workflow/method_comparison.png",
         efficiency_plot=PLOTS_PATH + "/workflow/people_brought_in_per_rcp.png",
-        markdown_table=PLOTS_PATH + "/workflow/method_comparison_table.md"
+        latex_table=PLOTS_PATH + "/workflow/method_comparison_table.tex"
     log:
         "logs/method_comparison.log"
     conda:

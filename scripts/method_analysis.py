@@ -164,26 +164,43 @@ def main():
     plt.savefig(snakemake.output.efficiency_plot, dpi=400, bbox_inches='tight', facecolor=background_color)
     plt.close()
     
-    # Create markdown file with comparison table
-    logging.info("Creating markdown table")
-    mdFile = MdUtils(file_name=snakemake.output.markdown_table)
-    
-    # Add title
-    mdFile.write("\n## Method Comparison Results\n")
-    
-    # Create table header 
-    headers = comparison_df.columns.tolist()
-    table = [headers]
-    
-    # Add rows
-    for _, row in comparison_df.iterrows():
-        table.append([str(val) for val in row.values])
-    
-    # Create table with mdutils
-    mdFile.new_table(columns=len(headers), rows=len(table), text=sum(table, []))
-    
-    # Create file
-    mdFile.create_md_file()
+    # Create LaTeX file with comparison table
+    logging.info("Creating LaTeX table")
+    latex_file = snakemake.output.latex_table  # file name remains same, but now it's a .tex file
+    with open(latex_file, 'w') as f:
+        # Write the LaTeX document header
+        f.write('\\documentclass{article}\n')
+        f.write('\\usepackage[utf8]{inputenc}\n')
+        f.write('\\usepackage{booktabs}\n')
+        f.write('\\usepackage{array}\n')
+        f.write('\\begin{document}\n')
+        f.write('\\section*{Method Comparison Results}\n\n')
+        
+        # Begin the table environment
+        f.write('\\begin{table}[ht]\n\\centering\n')
+        
+        # Determine column alignment: using left alignment for all columns
+        num_cols = len(comparison_df.columns.tolist())
+        alignment = "l" * num_cols
+        f.write(f'\\begin{{tabular}}{{{alignment}}}\n')
+        f.write('\\toprule\n')
+        
+        # Write table header
+        headers = comparison_df.columns.tolist()
+        f.write(' & '.join(headers) + ' \\\\\n')
+        f.write('\\midrule\n')
+        
+        # Write table rows
+        for _, row in comparison_df.iterrows():
+            f.write(' & '.join(str(val) for val in row.values) + ' \\\\\n')
+        
+        f.write('\\bottomrule\n')
+        f.write('\\end{tabular}\n')
+        f.write('\\caption{Method Comparison Results}\n')
+        f.write('\\end{table}\n\n')
+        
+        # End of document
+        f.write('\\end{document}\n')
     
     logging.info("Method analysis completed successfully")
 
