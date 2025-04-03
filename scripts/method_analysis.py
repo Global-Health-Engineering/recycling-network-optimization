@@ -73,6 +73,11 @@ def main():
         'Number of additional RCPs': [0, additional_iso, additional_ors, additional_opt]
     })
     
+    # Create a new column for numeric walking time
+    comparison_df['walking_time'] = comparison_df['Average Walking Time (min)'].apply(
+        lambda x: float(x.split(':')[0]) + float(x.split(':')[1]) / 60.0
+    )
+    
     # Save the comparison results to CSV
     logging.info("Saving comparison results to CSV")
     comparison_df.to_csv(snakemake.output.comparison_csv, index=False)
@@ -82,45 +87,52 @@ def main():
     LABEL_SIZE = 14
     TICK_SIZE = 14
     
-    # Set dark theme style
-    plt.style.use('dark_background')
-    
-    # Create a figure with three subplots
-    logging.info("Creating comparison plots")
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 8))
-    fig.patch.set_facecolor('#1a1a1a')
-    
-    # Define blue color palette
-    colors = ['#1f77b4', '#2b94d1', '#37b0ee']
-    
-    # Plot 1: People outside the network
-    ax1.bar(comparison_df['Method'], comparison_df['Population Outside 10min'], color=colors)
-    ax1.set_title('People Outside Network', pad=15, fontsize=TITLE_SIZE)
-    ax1.set_ylabel('Number of People', fontsize=LABEL_SIZE)
-    ax1.tick_params(axis='x', rotation=45, labelsize=TICK_SIZE)
-    ax1.set_facecolor('#1a1a1a')
-    
-    # Plot 2: Walking time
-    walking_times = [float(t.split(':')[0]) + float(t.split(':')[1])/60 for t in comparison_df['Average Walking Time (min)']]
-    ax2.bar(comparison_df['Method'], walking_times, color=colors)
-    ax2.set_title('Population Weighted Walking Time', pad=15, fontsize=TITLE_SIZE)
-    ax2.set_ylabel('Minutes', fontsize=LABEL_SIZE)
-    ax2.tick_params(axis='x', rotation=45, labelsize=TICK_SIZE)
-    ax2.set_facecolor('#1a1a1a')
-    
+    # Bright theme parameters
+    background_color = 'white'
+    text_color = 'black'
+    colors = ['#0072B2', '#E69F00', '#009E73', '#CC79A7']  # Blue, Orange, Green, Purple
+
+    logging.info("Rewriting comparison plots with bright theme")
+    plt.figure(figsize=(18, 6), facecolor=background_color)
+
+    # Plot 1: People Outside Network
+    plt.subplot(1, 3, 1)
+    bars1 = plt.bar(comparison_df['Method'], comparison_df['Population Outside 10min'], color=colors)
+    plt.title('People Outside Network', fontsize=TITLE_SIZE, color=text_color, pad=15)
+    plt.ylabel('Number of People', fontsize=LABEL_SIZE, color=text_color)
+    plt.xticks(rotation=45, fontsize=TICK_SIZE, color=text_color, ha='right')
+    plt.gca().set_facecolor(background_color)
+    plt.gca().tick_params(colors=text_color)
+    for spine in plt.gca().spines.values():
+        spine.set_color(text_color)
+
+    # Plot 2: Walking Time
+    plt.subplot(1, 3, 2)
+    bars2 = plt.bar(comparison_df['Method'], comparison_df['walking_time'], color=colors)
+    plt.title('Population Weighted Walking Time', fontsize=TITLE_SIZE, color=text_color, pad=15)
+    plt.ylabel('Minutes', fontsize=LABEL_SIZE, color=text_color)
+    plt.xticks(rotation=45, fontsize=TICK_SIZE, color=text_color, ha='right')
+    plt.gca().set_facecolor(background_color)
+    plt.gca().tick_params(colors=text_color)
+    for spine in plt.gca().spines.values():
+        spine.set_color(text_color)
+
     # Plot 3: Number of New RCPs
-    ax3.bar(comparison_df['Method'][1:], comparison_df['Number of additional RCPs'][1:], color=colors[:-1])
-    ax3.set_title('Number of New RCPs', pad=15, fontsize=TITLE_SIZE)
-    ax3.set_ylabel('Count', fontsize=LABEL_SIZE)
-    ax3.tick_params(axis='x', rotation=45, labelsize=TICK_SIZE)
-    ax3.set_facecolor('#1a1a1a')
-    
+    plt.subplot(1, 3, 3)
+    bars3 = plt.bar(comparison_df['Method'][1:], comparison_df['Number of additional RCPs'][1:], color=colors[1:])
+    plt.title('Number of New RCPs', fontsize=TITLE_SIZE, color=text_color, pad=15)
+    plt.ylabel('Count', fontsize=LABEL_SIZE, color=text_color)
+    plt.xticks(rotation=45, fontsize=TICK_SIZE, color=text_color, ha='right')
+    plt.gca().set_facecolor(background_color)
+    plt.gca().tick_params(colors=text_color)
+    for spine in plt.gca().spines.values():
+        spine.set_color(text_color)
+
     plt.tight_layout()
-    
-    # Save comparison plot
-    logging.info("Saving method comparison plot")
-    plt.savefig(snakemake.output.comparison_plot, dpi=400, bbox_inches='tight', facecolor='#1a1a1a')
-    plt.close()
+
+    # Save the combined figure
+    plt.savefig('../data/plots/comparison_metrics.png', dpi=400, bbox_inches='tight', facecolor=background_color)
+    plt.show()
     
     # Calculate people brought in by comparing to current situation
     logging.info("Creating efficiency plot")
@@ -130,28 +142,26 @@ def main():
     # Calculate people per RCP
     people_per_rcp = people_brought_in / new_rcps
     
-    # Create figure with dark theme
-    plt.figure(figsize=(10, 6), facecolor='#1a1a1a')
+    # Create figure with bright theme
+    plt.figure(figsize=(10, 6), facecolor=background_color)
     
     # Plot the data
-    plt.bar(comparison_df['Method'][1:], people_per_rcp, color=colors[0:2])
+    plt.bar(comparison_df['Method'][1:], people_per_rcp, color=colors[1:])
     
     # Customize the plot
-    plt.title('People Brought Into Network per New RCP', fontsize=TITLE_SIZE, color='white', pad=15)
-    plt.ylabel('Number of People per RCP', fontsize=LABEL_SIZE, color='white')
-    plt.xticks(rotation=45, fontsize=TICK_SIZE, color='white')
-    plt.gca().set_facecolor('#1a1a1a')
-    plt.gca().tick_params(colors='white')
-    plt.gca().spines['bottom'].set_color('white')
-    plt.gca().spines['top'].set_color('white')
-    plt.gca().spines['left'].set_color('white')
-    plt.gca().spines['right'].set_color('white')
+    plt.title('People Brought Into Network per New RCP', fontsize=TITLE_SIZE, color=text_color, pad=15)
+    plt.ylabel('Number of People per RCP', fontsize=LABEL_SIZE, color=text_color)
+    plt.xticks(rotation=45, fontsize=TICK_SIZE, color=text_color, ha='right')
+    plt.gca().set_facecolor(background_color)
+    plt.gca().tick_params(colors=text_color)
+    for spine in plt.gca().spines.values():
+        spine.set_color(text_color)
     
     plt.tight_layout()
     
     # Save efficiency plot
     logging.info("Saving efficiency plot")
-    plt.savefig(snakemake.output.efficiency_plot, dpi=400, bbox_inches='tight', facecolor='#1a1a1a')
+    plt.savefig(snakemake.output.efficiency_plot, dpi=400, bbox_inches='tight', facecolor=background_color)
     plt.close()
     
     # Create markdown file with comparison table
