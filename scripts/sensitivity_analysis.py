@@ -65,7 +65,7 @@ def format_min_sec(x, pos):
 ax1.yaxis.set_major_formatter(mticker.FuncFormatter(format_min_sec))
 
 ax2.plot(results_df['clusters'], results_df['pop_outside_10min'], marker='o')
-ax2.set_title(r'Population Outside 10min by $n_clusters$')
+ax2.set_title(r'Population Outside 10min by $n_{clusters}$')
 ax2.set_xlabel('Number of Demand Clusters')
 ax2.set_ylabel('Population Outside 10min')
 
