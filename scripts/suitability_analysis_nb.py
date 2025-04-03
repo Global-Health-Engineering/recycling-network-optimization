@@ -233,9 +233,6 @@ def main():
     # Add layer control
     folium.LayerControl().add_to(m)
     
-    # Add scale control
-    ScaleControl(position='bottomleft', metric=True, imperial=False).add_to(m)
-    
     # Add legend
     legend_html = '''
      <div style="
