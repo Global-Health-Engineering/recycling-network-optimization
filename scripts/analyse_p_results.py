@@ -70,18 +70,6 @@ ax2.set_xlabel('Number of Facilities (p)')
 ax2.set_ylabel('Population Count')
 ax2.grid(True, linestyle='--', alpha=0.7)
 
-# Add marginal improvement percentages
-for i in range(1, len(results_df)):
-    prev_pop = results_df.iloc[i-1]['pop_outside_10min']
-    curr_pop = results_df.iloc[i]['pop_outside_10min']
-    
-    if prev_pop > 0:  # Avoid division by zero
-        pct_improvement = ((prev_pop - curr_pop) / prev_pop) * 100
-        ax2.annotate(f"{pct_improvement:.1f}%", 
-                     xy=(results_df.iloc[i]['p_value'], curr_pop),
-                     xytext=(0, -15), 
-                     textcoords='offset points',
-                     ha='center', fontsize=8)
 
 plt.tight_layout()
 plt.savefig(output_plot, dpi=350)
