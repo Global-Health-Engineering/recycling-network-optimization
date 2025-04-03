@@ -233,6 +233,30 @@ def main():
     # Add layer control
     folium.LayerControl().add_to(m)
     
+    # Add scale control
+    ScaleControl(position='bottomleft', metric=True, imperial=False).add_to(m)
+    
+    # Add legend
+    legend_html = '''
+     <div style="
+         position: fixed; 
+         bottom: 50px; left: 50px; width: 150px; height: 110px; 
+         border:2px solid grey; z-index:9999; font-size:14px;
+         background-color:white;
+         opacity: 0.7;
+         padding: 10px;
+         ">
+         <b>Legend</b><br>
+         <i style="background: #eeeeee; border:1px solid #aaaaaa; width: 18px; height: 18px; display: inline-block"></i>&nbsp; Suitable Areas<br>
+         <i style="background: #1f77b4; border-radius: 50%; width: 10px; height: 10px; display: inline-block"></i>&nbsp; Existing RCPs<br>
+         <i style="background: #ff7f0e; border-radius: 50%; width: 10px; height: 10px; display: inline-block"></i>&nbsp; Potential Sites
+     </div>
+    '''
+    m.get_root().html.add_child(folium.Element(legend_html))
+    
+    # Reduce map width to 75%
+    m.get_root().width = '75%'
+    
     # Save the map
     m.save(snakemake.output.map)
     logging.info("Suitability analysis completed successfully")
