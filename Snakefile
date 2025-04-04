@@ -17,7 +17,7 @@ rule all:
         DERIVED_DATA + "/workflow/flats_duration_clustering_iso.gpkg",
         DERIVED_DATA + "/workflow/flats_duration_clustering_ors.gpkg",
         DERIVED_DATA + "/workflow/flats_duration_opt.gpkg",
-        PLOTS_PATH + "/workflow/method_comparison_table.md",
+        PLOTS_PATH + "/workflow/method_comparison_table.tex",
         DERIVED_DATA + "/workflow/method_comparison.csv",
 
 # Main workflow rules
