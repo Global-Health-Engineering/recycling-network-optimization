@@ -37,13 +37,13 @@ optimization:
 data_preparation:
   # Population allocation parameters
   population_allocation:
-    flats_under_construction: true
-    flats_in_planning: true
+    flats_under_construction: false
+    flats_in_planning: false
     exclusion_buffer: 5
     
   # Demand points parameters
   demand_points:
-    n_clusters: 100  # Number of clusters for demand points
+    n_clusters: 700  # Number of clusters for demand points
     
   # Potential sites parameters
   potential_sites:
