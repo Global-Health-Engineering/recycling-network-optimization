@@ -144,7 +144,7 @@ def main():
     centroid = merged_isochrones.geometry.unary_union.centroid
 
     # Initialize the folium map centered on the centroid with specified tiles
-    m = folium.Map(location=[centroid.y, centroid.x], zoom_start=12)
+    m = folium.Map(location=[centroid.y, centroid.x], zoom_start=12, control_scale=True)
 
     # Convert 'time' column to numeric and convert seconds to minutes
     merged_isochrones['time'] = pd.to_numeric(merged_isochrones['time']) / 60
@@ -206,8 +206,8 @@ def main():
             location=[row.geometry.y, row.geometry.x],
             radius=3,
             fill=True,
-            color='red',
-            fill_color='red',
+            color='orange',
+            fill_color='orange',
             fill_opacity=0.6,
             popup=f'Population: {row.est_pop:.2f}'
         ).add_to(underserved_layer)
@@ -215,6 +215,28 @@ def main():
 
     # Add layer control
     folium.LayerControl().add_to(m)
+    legend_html = '''
+    <div style="
+        position: fixed;
+        bottom: 50px;
+        left: 50px;
+        width: 150px;
+        height: 110px;
+        border:2px solid grey;
+        z-index:9999;
+        font-size:14px;
+        background-color: white;
+        opacity: 0.8;
+        padding: 10px;
+    ">
+        <b>Legend</b><br>
+        <i class="fa fa-bullseye" style="color: purple"></i>&nbsp;Cluster Center<br>
+        <i class="fa fa-map-marker" style="color: blue"></i>&nbsp;New RCP Location<br>
+        <i class="fa fa-recycle" style="color: green"></i>&nbsp;Existing RCP<br>
+        <i class="fa fa-circle" style="color: orange"></i>&nbsp;Underserved Flats
+    </div>
+    '''
+    m.get_root().html.add_child(folium.Element(legend_html))
 
     # Save the map
     m.save(snakemake.output.html_map)
