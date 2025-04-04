@@ -131,7 +131,7 @@ def main():
     plt.tight_layout()
 
     # Save the combined figure
-    plt.savefig('../data/plots/comparison_metrics.png', dpi=400, bbox_inches='tight', facecolor=background_color)
+    plt.savefig(snakemake.output.comparison_plot , dpi=400, bbox_inches='tight', facecolor=background_color)
     plt.show()
     
     # Calculate people brought in by comparing to current situation
