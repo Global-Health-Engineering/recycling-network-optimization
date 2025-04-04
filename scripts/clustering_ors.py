@@ -95,7 +95,7 @@ def find_closest_potential(cluster_centers, potential_sites, route_url="http://l
         )
         
         # If no location is nearby, skip this centre
-        if potential_pot['duration'] >= 5:
+        if potential_pot['duration'].min() >= 5:
             continue
         
         # Select the potential site with the minimal duration
