@@ -3,6 +3,7 @@ import requests
 from snakemake.logging import logger
 from shapely.ops import unary_union
 from shapely.geometry import shape
+from shapely.geometry import Point
 import pandas as pd
 import sys
 import os
@@ -20,10 +21,12 @@ OUTPUT_GPKG_merged = snakemake.output['iso_merged']
 # Get routing engine from params
 ROUTING_ENGINE = snakemake.params.get('routing_engine', 'valhalla')
 
-TIME_LIMITS = [300, 600]  # in seconds
-
 flats = gpd.read_file(INPUT_FLATS).to_crs("EPSG:4326")
 rcps = gpd.read_file(INPUT_RCPS).to_crs("EPSG:4326")
+
+# fix issue with missing geometry in heigianwandweg rcp
+rcps.loc[rcps['adresse'].str.contains('Hegianwandweg'), 'geometry'] = Point(8.508863, 47.355708)
+rcps = rcps.set_geometry('geometry')
 
 logger.info(f"Started the script with {ROUTING_ENGINE} routing engine.")
 

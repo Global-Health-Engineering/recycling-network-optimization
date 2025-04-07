@@ -47,7 +47,8 @@ rule clustering_isochrones:
     output:
         merged_isochrones=DERIVED_DATA + "/workflow/merged_isochrones.gpkg",
         clustered_sites=DERIVED_DATA + "/workflow/rcps_clustering_iso.gpkg",
-        html_map=PLOTS_PATH + "/workflow/map_clustering_iso.html"
+        html_map=PLOTS_PATH + "/workflow/map_clustering_iso.html",
+        cluster_centres=DERIVED_DATA + "/workflow/cluster_centres.gpkg",
     params:
         eps=config["optimization"]["clustering"]["dbscan"]["eps"],
         min_samples=config["optimization"]["clustering"]["dbscan"]["min_samples"],
