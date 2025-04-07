@@ -138,6 +138,10 @@ def main():
     # Export to file
     logger.info(f"Saving results to {snakemake.output.clustered_sites}")
     rcp_summary.to_file(snakemake.output.clustered_sites, driver='GPKG')
+
+    # Save the cluster centers to a file 
+    logger.info(f"Saving cluster centers to {snakemake.output.cluster_centers}")
+    cluster_centers_gdf.to_file(snakemake.output.cluster_centers, driver='GPKG')
     
     # Generate map visualization
     logger.info("Generating map visualization")
