@@ -132,7 +132,6 @@ def main():
 
     # Save the combined figure
     plt.savefig(snakemake.output.comparison_plot , dpi=400, bbox_inches='tight', facecolor=background_color)
-    plt.show()
     
     # Calculate people brought in by comparing to current situation
     logging.info("Creating efficiency plot")
@@ -164,6 +163,16 @@ def main():
     plt.savefig(snakemake.output.efficiency_plot, dpi=400, bbox_inches='tight', facecolor=background_color)
     plt.close()
     
+    # Format columns for LaTeX output
+    def time_to_seconds(t):
+        mins, secs = t.split(':')
+        return int(mins) * 60 + int(secs)
+
+    df_formatted = comparison_df.copy()
+    df_formatted['Coverage (%)'] = df_formatted['Coverage (%)'].apply(lambda x: f"{x:.2f}")
+    df_formatted['Population Outside 10min'] = df_formatted['Population Outside 10min'].apply(lambda x: f"{int(round(x, 0))}")
+    df_formatted['Average Walking Time (min)'] = df_formatted['Average Walking Time (min)'].apply(lambda t: f"{time_to_seconds(t)} s")
+
     # Create LaTeX file with comparison table
     logging.info("Creating LaTeX table")
     latex_file = snakemake.output.latex_table  # file name remains same, but now it's a .tex file
@@ -180,18 +189,18 @@ def main():
         f.write('\\begin{table}[ht]\n\\centering\n')
         
         # Determine column alignment: using left alignment for all columns
-        num_cols = len(comparison_df.columns.tolist())
+        num_cols = len(df_formatted.columns.tolist())
         alignment = "l" * num_cols
         f.write(f'\\begin{{tabular}}{{{alignment}}}\n')
         f.write('\\toprule\n')
         
         # Write table header
-        headers = comparison_df.columns.tolist()
+        headers = df_formatted.columns.tolist()
         f.write(' & '.join(headers) + ' \\\\\n')
         f.write('\\midrule\n')
         
         # Write table rows
-        for _, row in comparison_df.iterrows():
+        for _, row in df_formatted.iterrows():
             f.write(' & '.join(str(val) for val in row.values) + ' \\\\\n')
         
         f.write('\\bottomrule\n')
