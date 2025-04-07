@@ -24,8 +24,8 @@ for p, duration_file in zip(p_values, duration_files):
     durations = gpd.read_file(duration_file)
     
     # Calculate metrics
-    avg_duration = (durations['duration'] * durations['est_pop']).sum() / durations['est_pop'].sum()
-    pop_outside_10min = durations[durations['duration'] > 10]['est_pop'].sum()
+    avg_duration = (durations['duration_min'] * durations['est_pop']).sum() / durations['est_pop'].sum()
+    pop_outside_10min = durations[durations['duration_min'] > 10]['est_pop'].sum()
     
     # Store basic metrics
     results.append({
