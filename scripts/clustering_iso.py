@@ -6,6 +6,7 @@ from sklearn.cluster import DBSCAN
 import folium
 import branca.colormap as cm
 from shapely.ops import unary_union
+from shapely.geometry import Point
 import sys
 import os
 import logging
@@ -36,24 +37,30 @@ def main():
     flats_pop = gpd.read_file(snakemake.input.flats)
     rcps = gpd.read_file(snakemake.input.rcps)
     potential_sites = gpd.read_file(snakemake.input.potential_sites)
-    
-    # Ensure consistent CRS
+
+    # fix issue with missing geometry in heigianwandweg rcp
+    rcps.loc[rcps['adresse'].str.contains('Hegianwandweg'), 'geometry'] = Point(8.508863, 47.355708)
+
+    # Ensure all GeoDataFrames are in the same CRS
     rcps = rcps.to_crs('EPSG:4326')
+    flats_pop = flats_pop.to_crs('EPSG:4326')
+    potential_sites = potential_sites.to_crs('EPSG:4326')
+    existing_isochrones = existing_isochrones.to_crs('EPSG:4326')
+    logger.info("Reprojecting GeoDataFrames to EPSG:4326")
+
+
+    # Ensure consistent CRS
 
     # Merge isochrones preserving time
     logger.info("Merging isochrones")
     merged_isochrones = merge_isochrones_preserve_time(existing_isochrones)
     merged_isochrones.to_file(snakemake.output.merged_isochrones, driver='GPKG')
 
-    # Reproject flats_pop to match merged_isochrones CRS
-    logger.info("Identifying flats outside isochrones")
-    flats_pop_4326 = flats_pop.to_crs(merged_isochrones.crs)
-
     # Merge all isochrones into a single geometry
     iso_union = merged_isochrones.unary_union
 
     # Identify flats outside any isochrones
-    flats_outside = flats_pop_4326[~flats_pop_4326.geometry.within(iso_union)]
+    flats_outside = flats_pop[~flats_pop.geometry.within(iso_union)]
     logger.info(f"Found {len(flats_outside)} flats outside isochrones")
 
     # Convert to centroids and set up the data for clustering
@@ -140,9 +147,8 @@ def main():
     rcp_summary.to_file(snakemake.output.clustered_sites, driver='GPKG')
 
     # Save the cluster centers to a file 
-    logger.info(f"Saving cluster centers to {snakemake.output.cluster_centers}")
-    cluster_centers_gdf.to_file(snakemake.output.cluster_centers, driver='GPKG')
-    
+    cluster_centers_gdf.to_file(snakemake.output.cluster_centres, driver='GPKG')
+
     # Generate map visualization
     logger.info("Generating map visualization")
     centroid = merged_isochrones.geometry.unary_union.centroid
@@ -225,7 +231,7 @@ def main():
         bottom: 50px;
         left: 50px;
         width: 150px;
-        height: 110px;
+        height: 130px;
         border:2px solid grey;
         z-index:9999;
         font-size:14px;
