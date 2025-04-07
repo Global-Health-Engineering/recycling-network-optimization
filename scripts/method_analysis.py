@@ -168,11 +168,10 @@ def main():
         mins, secs = t.split(':')
         return int(mins) * 60 + int(secs)
 
-    df_formatted = comparison_df.copy()
+    df_formatted = comparison_df.copy().drop(columns=['walking_time'])
     df_formatted['Coverage (%)'] = df_formatted['Coverage (%)'].apply(lambda x: f"{x:.2f}")
     df_formatted['Population Outside 10min'] = df_formatted['Population Outside 10min'].apply(lambda x: f"{int(round(x, 0))}")
-    df_formatted['Average Walking Time (min)'] = df_formatted['Average Walking Time (min)'].apply(lambda t: f"{time_to_seconds(t)} s")
-
+     
     # Create LaTeX file with comparison table
     logging.info("Creating LaTeX table")
     latex_file = snakemake.output.latex_table  # file name remains same, but now it's a .tex file
