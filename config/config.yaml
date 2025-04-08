@@ -39,7 +39,7 @@ data_preparation:
   population_allocation:
     flats_under_construction: false
     flats_in_planning: false
-    exclusion_buffer: 5
+    exclusion_buffer: 5 # if a new building is planned within this distance, the old one is excluded from the population allocation
     
   # Demand points parameters
   demand_points:
