@@ -102,7 +102,7 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
 
         #save optimality gap to a file
         with open(snakemake.output.optimality_gap, "w") as f:
-            f.write(f"{optimality_gap}")
+            f.write(f"{optimality_gap:.4f}")
 
         logger.info(f"Optimality gap: {optimality_gap}")
         logger.info(f"Solver time: {solve_time:.2f} seconds")
