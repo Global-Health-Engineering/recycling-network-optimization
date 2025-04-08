@@ -10,9 +10,10 @@ from shapely.geometry import shape
 
 # Get input and output files from snakemake
 duration_files = snakemake.input.duration_files
-optimality_gap_files = snakemake.input.optimality_gap_files  # Add optimality gap files
+optimality_gap_files = snakemake.input.optimality_gap_files
 output_summary = snakemake.output.summary
-output_plot = snakemake.output.plot
+output_metrics_plot = snakemake.output.metrics_plot
+output_optimality_plot = snakemake.output.optimality_plot
 
 # Define p values from file names
 p_values = [int(Path(file).stem.split('_')[-1]) for file in duration_files]
@@ -52,17 +53,17 @@ for p, duration_file, gap_file in zip(p_values, duration_files, optimality_gap_f
 # Create results DataFrame with only the indicator metrics and p values
 results_df = pd.DataFrame(results)
 
-# Plot results
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))  # Change to 3 subplots
+# Plot metrics results (first figure)
+fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
 # Sort by p_value to ensure proper plotting order
 results_df = results_df.sort_values('p_value')
 
 # Plot average duration by p value
 ax1.plot(results_df['p_value'], results_df['avg_duration'], marker='o', linestyle='-')
-ax1.set_title('Average Walking Duration by Number of Facilities')
-ax1.set_xlabel('Number of Facilities (p)')
-ax1.set_ylabel('Weighted Average Duration (min:s)')
+ax1.set_title('Population-Weighted Walking Duration by Number of new RCPs')
+ax1.set_xlabel('Number of new RCPs (p)')
+ax1.set_ylabel('Pop-Weighted Duration (min:s)')
 ax1.grid(True, linestyle='--', alpha=0.7)
 
 # Format y-axis to show minutes:seconds
@@ -76,9 +77,15 @@ ax1.yaxis.set_major_formatter(mticker.FuncFormatter(format_min_sec))
 # Plot population outside 10min walking distance
 ax2.plot(results_df['p_value'], results_df['pop_outside_10min'], marker='o', linestyle='-', color='orangered')
 ax2.set_title('Population Outside 10min Walking Distance')
-ax2.set_xlabel('Number of Facilities (p)')
+ax2.set_xlabel('Number of new RCPs (p)')
 ax2.set_ylabel('Population Count')
 ax2.grid(True, linestyle='--', alpha=0.7)
+
+plt.tight_layout()
+plt.savefig(output_metrics_plot, dpi=350)
+
+# Create separate plot for optimality gap (second figure)
+fig2, ax3 = plt.subplots(figsize=(8, 6))
 
 # Plot optimality gap
 ax3.plot(results_df['p_value'], results_df['optimality_gap'], marker='o', linestyle='-', color='green')
@@ -92,9 +99,9 @@ if results_df['optimality_gap'].max() <= 1.0:
     ax3.yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
 
 plt.tight_layout()
-plt.savefig(output_plot, dpi=350)
+plt.savefig(output_optimality_plot, dpi=350)
 
 # Save summary results (only indicators and p value)
 results_df.to_csv(output_summary, index=False)
 
-print(f"Analysis complete. Results saved to {output_summary} and {output_plot}")
+print(f"Analysis complete. Results saved to {output_summary}, {output_metrics_plot}, and {output_optimality_plot}")

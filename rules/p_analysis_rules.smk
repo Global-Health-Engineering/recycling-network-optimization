@@ -8,7 +8,8 @@ P_VALUES = range(
 # Target rule for p-analysis
 rule run_p_analysis:
     input:
-        PLOTS_PATH + "/p-analysis/p_comparison_plot.png",
+        PLOTS_PATH + "/p-analysis/metrics_comparison_plot.png",
+        PLOTS_PATH + "/p-analysis/optimality_gap_plot.png",
         DERIVED_DATA + "/p-analysis/summary_metrics.csv"
 
 rule p_analysis_optimisation:
@@ -50,7 +51,8 @@ rule analyse_p_results:
         optimality_gap_files=expand(DERIVED_DATA + "/p-analysis/optimality_gap_{p}.txt", p=P_VALUES)
     output:
         summary=DERIVED_DATA + "/p-analysis/summary_metrics.csv",
-        plot=PLOTS_PATH + "/p-analysis/p_comparison_plot.png"
+        metrics_plot=PLOTS_PATH + "/p-analysis/metrics_comparison_plot.png",
+        optimality_plot=PLOTS_PATH + "/p-analysis/optimality_gap_plot.png"
     log:
         "logs/p-analysis/summary.log"
     conda:
