@@ -5,6 +5,7 @@ import pulp
 from snakemake.logging import logger
 import sys
 import time
+import gurobipy
 
 # Configure logging
 logger.info("Starting linear optimization...")
@@ -47,7 +48,10 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         
         # Create the model
         prob = pulp.LpProblem("P-Median_Problem", pulp.LpMinimize)
-        
+
+        # Set the solver
+        solver = pulp.GUROBI(msg=True)
+
         # Assignment decision variables
         x = pulp.LpVariable.dicts("Assign", [(i, j) for i in I for j in J], cat='Binary')
         
@@ -72,7 +76,7 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         # Try to solve with Gurobi if available, otherwise use the default solver
         start_time = time.time()
         try:
-            solver_status = prob.solve(pulp.GUROBI(msg=True))
+            solver_status = prob.solve(solver)
         except:
             logger.warning("Gurobi solver not available. Using default solver.")
             solver_status = prob.solve()
@@ -93,18 +97,16 @@ def run_optimization(demand_points_path, potential_sites_path, distance_matrix_p
         # Create a dataframe of selected sites
         selected_sites = potential_sites.iloc[opened_facilities].copy()
         selected_sites.to_file(output_sites_path, driver="GPKG")
-        
-        # Return key metrics for validation
-        def extract_results(model, solve_time):
-            # Here we assume optimality_gap is 0 by default.
-            optimality_gap = 0
-            return {
-                "status": pulp.LpStatus[model.status],
-                "objective": pulp.value(model.objective),
-                "solve_time": solve_time,
-            }
-        
-        return extract_results(prob, solve_time)
+
+        optimality_gap = solver.model.MIPGap
+
+        #save optimality gap to a file
+        with open(snakemake.output.optimality_gap, "w") as f:
+            f.write(f"{optimality_gap}")
+
+        logger.info(f"Optimality gap: {optimality_gap}")
+        logger.info(f"Solver time: {solve_time:.2f} seconds")
+        return
         
     except Exception as e:
         logger.error(f"Optimization failed: {e}")

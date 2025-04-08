@@ -15,9 +15,10 @@ rule p_analysis_optimisation:
     input:
         demand_points=DERIVED_DATA + "/workflow/kmeans_clusters.gpkg", 
         potential_sites=DERIVED_DATA + "/workflow/all_pot_sites.gpkg",
-        distance_matrix=DERIVED_DATA + "/workflow/distance_matrix_walking.csv",
+        distance_matrix=DERIVED_DATA + "/workflow/distance_matrix.csv",
     output:
-        sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg"
+        sites=DERIVED_DATA + "/p-analysis/rcps_optimisation_{p}.gpkg",
+        optimality_gap=DERIVED_DATA + "/p-analysis/optimality_gap_{p}.txt"
     params:
         num_facilities=lambda wildcards: int(wildcards.p),
         routing_engine=ROUTING_ENGINE
@@ -45,7 +46,8 @@ rule p_analysis_distance_calculation:
 
 rule analyse_p_results:
     input:
-        duration_files=expand(DERIVED_DATA + "/p-analysis/flats_duration_p_{p}.gpkg", p=P_VALUES)
+        duration_files=expand(DERIVED_DATA + "/p-analysis/flats_duration_p_{p}.gpkg", p=P_VALUES),
+        optimality_gap_files=expand(DERIVED_DATA + "/p-analysis/optimality_gap_{p}.txt", p=P_VALUES)
     output:
         summary=DERIVED_DATA + "/p-analysis/summary_metrics.csv",
         plot=PLOTS_PATH + "/p-analysis/p_comparison_plot.png"

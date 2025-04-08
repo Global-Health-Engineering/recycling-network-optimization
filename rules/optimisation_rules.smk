@@ -8,7 +8,9 @@ rule linear_optimisation:
     conda:
         "../envs/solver_env.yaml"
     output:
-        sites=DERIVED_DATA + "/workflow/rcps_optimisation.gpkg"
+        sites=DERIVED_DATA + "/workflow/rcps_optimisation.gpkg",
+        optimality_gap=DERIVED_DATA + "/workflow/optimality_gap.txt"
+
     params:
         num_facilities=config["optimization"]["linear_optimisation"]["num_facilities"],
         routing_engine=ROUTING_ENGINE  # Pass the routing engine parameter
