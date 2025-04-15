@@ -59,12 +59,19 @@ fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 # Sort by p_value to ensure proper plotting order
 results_df = results_df.sort_values('p_value')
 
+# Define font sizes as variables to make them easily adjustable
+title_fontsize = 15
+label_fontsize = 12
+tick_fontsize = 12
+legend_fontsize = 12
+
 # Plot average duration by p value
 ax1.plot(results_df['p_value'], results_df['avg_duration'], marker='o', linestyle='-')
-ax1.set_title('Population-Weighted Walking Duration by Number of new RCPs')
-ax1.set_xlabel('Number of new RCPs (p)')
-ax1.set_ylabel('Pop-Weighted Duration (min:s)')
+ax1.set_title('Population-Weighted Walking Duration by Number of new RCPs', fontsize=title_fontsize)
+ax1.set_xlabel('Number of new RCPs (p)', fontsize=label_fontsize)
+ax1.set_ylabel('Pop-Weighted Duration (min:s)', fontsize=label_fontsize)
 ax1.grid(True, linestyle='--', alpha=0.7)
+ax1.tick_params(labelsize=tick_fontsize)
 
 # Format y-axis to show minutes:seconds
 def format_min_sec(x, pos):
@@ -76,10 +83,11 @@ ax1.yaxis.set_major_formatter(mticker.FuncFormatter(format_min_sec))
 
 # Plot population outside 10min walking distance
 ax2.plot(results_df['p_value'], results_df['pop_outside_10min'], marker='o', linestyle='-', color='orangered')
-ax2.set_title('Population Outside 10min Walking Distance')
-ax2.set_xlabel('Number of new RCPs (p)')
-ax2.set_ylabel('Population Count')
+ax2.set_title('Population Outside 10min Walking Distance', fontsize=title_fontsize)
+ax2.set_xlabel('Number of new RCPs (p)', fontsize=label_fontsize)
+ax2.set_ylabel('Population Count', fontsize=label_fontsize)
 ax2.grid(True, linestyle='--', alpha=0.7)
+ax2.tick_params(labelsize=tick_fontsize)
 
 plt.tight_layout()
 plt.savefig(output_metrics_plot, dpi=350)

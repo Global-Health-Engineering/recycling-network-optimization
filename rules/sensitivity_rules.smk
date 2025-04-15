@@ -5,6 +5,7 @@ CLUSTERS = config["sensitivity_analysis"]["clusters"]
 rule run_sensitivity_analysis:
     input:
         PLOTS_PATH + "/sensitivity_analysis/comparison_plot.png",
+        PLOTS_PATH + "/sensitivity_analysis/optimality_gap_plot.png",
         DERIVED_DATA + "/sensitivity_analysis/summary_metrics.csv",
         expand(DERIVED_DATA + "/sensitivity_analysis/flats_duration_{n}.gpkg", n=CLUSTERS)
 
@@ -45,7 +46,8 @@ rule sensitivity_linear_optimisation:
         distance_matrix=DERIVED_DATA + "/sensitivity_analysis/distance_matrix_{n_clusters}.csv",
         flats=DERIVED_DATA + "/workflow/flats_population.gpkg"
     output:
-        sites=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg"
+        sites=DERIVED_DATA + "/sensitivity_analysis/rcps_optimisation_{n_clusters}.gpkg",
+        optimality_gap=DERIVED_DATA + "/sensitivity_analysis/optimality_gap_{n_clusters}.txt"
     params:
         num_facilities=config["sensitivity_analysis"]["linear_optimisation"]["num_facilities"],
     log:
@@ -71,10 +73,12 @@ rule sensitivity_distance_calculation:
 # Analysis rule for sensitivity results
 rule analyze_sensitivity_results:
     input:
-        duration_files=expand(DERIVED_DATA + "/sensitivity_analysis/flats_duration_{n}.gpkg", n=CLUSTERS)
+        duration_files=expand(DERIVED_DATA + "/sensitivity_analysis/flats_duration_{n}.gpkg", n=CLUSTERS),
+        optimality_gap_files=expand(DERIVED_DATA + "/sensitivity_analysis/optimality_gap_{n}.txt", n=CLUSTERS)
     output:
         summary=DERIVED_DATA + "/sensitivity_analysis/summary_metrics.csv",
-        plot=PLOTS_PATH + "/sensitivity_analysis/comparison_plot.png"
+        plot=PLOTS_PATH + "/sensitivity_analysis/comparison_plot.png",
+        optimality_plot=PLOTS_PATH + "/sensitivity_analysis/optimality_gap_plot.png"
     log:
         "logs/sensitivity/analysis.log"
     conda:
