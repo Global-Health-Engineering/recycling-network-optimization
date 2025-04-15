@@ -65,7 +65,7 @@ def main():
     additional_opt = len(rcp_opt)-len(rcp_current)
 
     comparison_df = pd.DataFrame({
-        'Method': ['Current Situation', 'Iso+Clustering', 'ORS+Clustering', 'Linear Optimisation'],
+        'Method': ['Current Situation', 'Iso+Clustering', 'Routing+Clustering', 'Linear Optimisation'],
         'Population Outside 10min': [orig_outside, iso_outside, ors_outside, opt_outside],
         'Coverage (%)': [orig_coverage, iso_coverage, ors_coverage, opt_coverage],
         'Average Walking Time (min)': [format_time(orig_weighted), format_time(iso_weighted), 
@@ -142,7 +142,7 @@ def main():
     people_per_rcp = people_brought_in / new_rcps
     
     # Create figure with bright theme
-    plt.figure(figsize=(10, 6), facecolor=background_color)
+    plt.figure(figsize=(12, 8), facecolor=background_color)
     
     # Plot the data
     plt.bar(comparison_df['Method'][1:], people_per_rcp, color=colors[1:])
@@ -160,7 +160,7 @@ def main():
     
     # Save efficiency plot
     logging.info("Saving efficiency plot")
-    plt.savefig(snakemake.output.efficiency_plot, dpi=400, bbox_inches='tight', facecolor=background_color)
+    plt.savefig(snakemake.output.efficiency_plot, dpi=300, bbox_inches='tight', facecolor=background_color )
     plt.close()
     
     # Format columns for LaTeX output
