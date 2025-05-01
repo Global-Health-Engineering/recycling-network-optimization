@@ -1,4 +1,5 @@
 <!-- badges: start -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15320179.svg)](https://doi.org/10.5281/zenodo.15320179)
 <!-- badges: end -->
 
 <h1> Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland </h1>

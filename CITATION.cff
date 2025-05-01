@@ -3,7 +3,7 @@ message: "To cite this repository, use:"
 license: CC-BY-4.0
 title: "Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland"
 date-released: "2025-04-25"
-doi: DOI
+doi: 10.5281/zenodo.15320179
 type: software
 authors:
   - family-names: Schweizer
