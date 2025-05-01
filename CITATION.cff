@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "To cite this repository, use:"
+license: CC-BY-4.0
+title: "Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland"
+date-released: "2025-04-25"
+doi: DOI
+type: software
+authors:
+  - family-names: Schweizer
+    given-names: Silas
+    email: ssilas@student.ethz.ch
+    ordid: https://orcid.org/0009-0000-1284-7063
+  - family-names: Tkaczuk
+    given-names: Jakub
+    email: jtkaczuk@ethz.ch
+    orcid: https://orcid.org/0000-0001-7997-9423
+  - family-names: Tilley
+    given-names: Elizabeth
+    email: tilleye@ethz.ch
+    orcid: https://orcid.org/0000-0002-2095-9724
+  - family-names: Seemann-Ricard
+    given-names: Nicolas
+    email: nseemann@student.ethz.ch
+    orcid: https://orcid.org/0000-0002-0945-7475
+contact:
+  - family-names: Schweizer
+    given-names: Silas
+    email: ssilas@student.ethz.ch
+    ordid: https://orcid.org/0009-0000-1284-7063
+version: 0.0.1
