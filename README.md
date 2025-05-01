@@ -1,6 +1,29 @@
-# Recycling-network-optimization
+<!-- badges: start -->
+<!-- badges: end -->
 
-Masters thesis project by Silas Schweizer, supervised by Dr. Jakub Tkaczuk and suüpported by Nicolas Seeman. 
+<h1> Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland </h1>
+
+<b>Contributors</b>  
+- Silas Schweizer <a href="https://orcid.org/0009-0000-1284-7063">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0009-0000-1284-7063
+</a> *author, developer, maintainer*  
+- Jakub Tkaczuk <a href="https://orcid.org/0000-0001-7997-9423">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0001-7997-9423
+</a> *supervisor, maintainer*  
+- Elizabeth Tilley <a href="https://orcid.org/0000-0002-2095-9724">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-2095-9724
+</a> *supervisor*  
+- Nicolas Seemann-Ricard <a href="https://orcid.org/0000-0002-0945-7475">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-0945-7475
+</a> *technical support*  
+
+<br>
+<p align="middle"> 
+<img src="img/ETH_GHE_logo_negative.svg" width=600>
+<br><br>
+This repository compliments the openly-accessible master’s thesis, available on the<br \>  
+<a href="">ETH Research Collection</a>.
+</p>
 
 # Goal
 - Test different methods of optimising the recycling network of Zurich.
