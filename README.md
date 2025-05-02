@@ -1,8 +1,35 @@
 # Recycling Collection Points (RCP) Optimization Project
 
-## Project Overview
-This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed.
+<!-- badges: start -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15320179.svg)](https://doi.org/10.5281/zenodo.15320179)
+<!-- badges: end -->
 
+<h1> Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland </h1>
+
+<b>Contributors</b>  
+- Silas Schweizer <a href="https://orcid.org/0009-0000-1284-7063">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0009-0000-1284-7063
+</a> *author, developer, maintainer*  
+- Jakub Tkaczuk <a href="https://orcid.org/0000-0001-7997-9423">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0001-7997-9423
+</a> *supervisor, maintainer*  
+- Elizabeth Tilley <a href="https://orcid.org/0000-0002-2095-9724">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-2095-9724
+</a> *supervisor*  
+- Nicolas Seemann-Ricard <a href="https://orcid.org/0000-0002-0945-7475">
+<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-0945-7475
+</a> *technical support*  
+
+<br>
+<p align="middle"> 
+<img src="img/ETH_GHE_logo_negative.svg" width=600>
+<br><br>
+This repository compliments the openly-accessible master’s thesis, available on the<br \>  
+<a href="">ETH Research Collection</a>.
+</p>
+
+## Project Overview
+This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. 
 ## Directory Structure
 ```
 rcp_project/
