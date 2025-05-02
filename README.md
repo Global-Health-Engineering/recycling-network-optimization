@@ -1,5 +1,3 @@
-# Recycling Collection Points (RCP) Optimization Project
-
 <!-- badges: start -->
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15320179.svg)](https://doi.org/10.5281/zenodo.15320179)
 <!-- badges: end -->
@@ -29,7 +27,9 @@ This repository compliments the openly-accessible master’s thesis, available o
 </p>
 
 ## Project Overview
-This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. 
+This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. The workflow uses a routing engine to calculate actual waking durations using the stree network rather than relying on airline distances.
+
+
 ## Directory Structure
 ```
 rcp_project/
@@ -191,6 +191,7 @@ The project workflow consists of the following main stages:
 ### Prerequisites
 - Conda/Miniconda
 - Git
+- A local instance of [Valhalla](https://github.com/valhalla/valhalla/) or [OpenRouteService](https://openrouteservice.org/); an ORS API key works too but is too slow for a real analysis
 
 ### Setup
 1. Clone the repository:
@@ -244,7 +245,7 @@ The workflow produces the following key outputs:
 2. **Coverage Analysis**
    - Buildings with calculated walking time to nearest RCP
    - Population covered within different time thresholds
-   - Files: `flats_duration_current.gpkg`, `flats_duration_clustering_ors.gpkg`, etc.
+   - Files: `flats_duration_current.gpkg`, etc.
 
 3. **Method Comparison**
    - Comparison metrics between different optimization approaches
@@ -253,16 +254,14 @@ The workflow produces the following key outputs:
 
 4. **Visualization Maps**
    - Interactive HTML maps showing analysis results
-   - Static plots for reports
-   - Files in `data/plots/report/` directory
+   - Files in `data/plots/` directory
 
 ## Routing Engines
-
 The project supports two routing engines:
 
 1. **Valhalla** (default)
    - High-performance open-source routing engine
-   - Requires local installation or API access
+   - Requires local installation
 
 2. **OpenRouteService (ORS)**
    - Alternative routing service with API access
