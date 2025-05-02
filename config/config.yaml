@@ -32,7 +32,7 @@ optimization:
     # ORS clustering specific parameters
     clustering_ors:
       iso_threshold: 10  # Threshold for underserved buildings
-
+  
 # Data preparation parameters
 data_preparation:
   # Population allocation parameters
