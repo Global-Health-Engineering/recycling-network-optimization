@@ -83,9 +83,9 @@ def main():
     comparison_df.to_csv(snakemake.output.comparison_csv, index=False)
     
     # Font size parameters
-    TITLE_SIZE = 19
-    LABEL_SIZE = 14
-    TICK_SIZE = 14
+    TITLE_SIZE = 22
+    LABEL_SIZE = 20
+    TICK_SIZE = 16
     
     # Bright theme parameters
     background_color = 'white'
