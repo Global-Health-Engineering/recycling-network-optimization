@@ -27,7 +27,7 @@ This repository compliments the openly-accessible master’s thesis, available o
 </p>
 
 ## Project Overview
-This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. The workflow uses a routing engine to calculate actual waking durations using the stree network rather than relying on airline distances.
+This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. The workflow uses a routing engine to calculate actual walking durations using the street network rather than relying on airline distances.
 
 
 ## Directory Structure
@@ -35,23 +35,27 @@ This project aims to optimize the placement of Recycling Collection Points (RCPs
 rcp_project/
 ├── config/                # Configuration files
 │   └── config.yaml        # Main config with analysis parameters
-├── data/
+├── data/                  # Data directory
 │   ├── derived_data/      # Processed datasets
-│   │   └── workflow/      # Intermediate files created during analysis
+│   │   └── workflow/      # Intermediate and final analysis outputs
 │   ├── plots/             # Generated visualizations
-│   │   └── report/        # Finalized visualizations for reports
 │   └── raw_data/          # Original unprocessed data
-│       └── geodata_stadt_Zuerich/  # Geographic data from Zurich
+│       └── geodata_stadt_Zuerich/          # Geographic data from Zurich
+│           ├── ssz.gwr_stzh_wohnungen.shp  # Building statistics
+│           ├── BEVOELKERUNG_HA_F.shp       # Population data
+│           ├── Gemeindegrenzen_-OGD.gpkg   # Municipal boundaries
+│           └── stzh.poi_sammelstelle_view.shp # Existing RCPs
 ├── envs/                  # Conda environment definitions
 │   ├── geo_env.yaml       # Environment for geospatial analysis
 │   ├── snake_env.yaml     # Environment for running Snakemake
 │   └── solver_env.yaml    # Environment for optimization solvers
+├── img/                   # Images for documentation
 ├── logs/                  # Logs from workflow execution
-├── notebooks/             # Jupyter notebooks for analysis and visualization
 ├── rules/                 # Snakemake workflow rules
 │   ├── data_preparation.smk  # Rules for data preparation
 │   ├── optimisation_rules.smk # Rules for optimization
-│   └── p_analysis_rules.smk   # Rules for sensitivity analysis
+│   ├── p_analysis_rules.smk   # Rules for p-analysis analysis
+│   └── sensitivity_rules.smk # Rules for sensitivity analysis
 ├── scripts/               # Python scripts used in workflow
 └── Snakefile              # Main workflow definition
 ```
@@ -192,6 +196,7 @@ The project workflow consists of the following main stages:
 - Conda/Miniconda
 - Git
 - A local instance of [Valhalla](https://github.com/valhalla/valhalla/) or [OpenRouteService](https://openrouteservice.org/); an ORS API key works too but is too slow for a real analysis
+- The Gurobi solver speeds things up a bit but is optional
 
 ### Setup
 1. Clone the repository:
@@ -261,11 +266,11 @@ The project supports two routing engines:
 
 1. **Valhalla** (default)
    - High-performance open-source routing engine
-   - Requires local installation
+   - Requires local installation, see config file
 
 2. **OpenRouteService (ORS)**
    - Alternative routing service with API access
-   - Requires API key configuration
+   - Requires API key configuration or local instance, see config file
 
 To switch routing engines, modify the `routing_engine` parameter in `config/config.yaml`.
 
