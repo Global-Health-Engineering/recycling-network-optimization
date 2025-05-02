@@ -205,7 +205,7 @@ The project workflow consists of the following main stages:
 - Conda/Miniconda
 - Git
 - A local instance of [Valhalla](https://github.com/valhalla/valhalla/) or [OpenRouteService](https://openrouteservice.org/); an ORS API key works too but is too slow for a real analysis
-- The Gurobi solver speeds things up a bit but is optional
+- Gurobi
 
 ### Setup
 1. Clone the repository:
