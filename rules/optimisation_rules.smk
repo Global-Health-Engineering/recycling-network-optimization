@@ -27,7 +27,8 @@ rule clustering_ors:
     output:
         rcps_clustering_ors=DERIVED_DATA + "/workflow/rcps_clustering_ors.gpkg",
         flats_duration=DERIVED_DATA + "/workflow/flats_duration_current.gpkg",
-        map_clustering_ors=PLOTS_PATH + "/workflow/map_clustering_ors.html"
+        map_clustering_ors=PLOTS_PATH + "/workflow/map_clustering_ors.html",
+        clusters=DERIVED_DATA + "/workflow/clusters_ors.gpkg",
     params:
         eps=config["optimization"]["clustering"]["dbscan"]["eps"],
         min_samples=config["optimization"]["clustering"]["dbscan"]["min_samples"],
@@ -50,7 +51,7 @@ rule clustering_isochrones:
         merged_isochrones=DERIVED_DATA + "/workflow/merged_isochrones.gpkg",
         clustered_sites=DERIVED_DATA + "/workflow/rcps_clustering_iso.gpkg",
         html_map=PLOTS_PATH + "/workflow/map_clustering_iso.html",
-        cluster_centres=DERIVED_DATA + "/workflow/cluster_centres.gpkg",
+        cluster_centres=DERIVED_DATA + "/workflow/cluster_centres_ischrones.gpkg",
     params:
         eps=config["optimization"]["clustering"]["dbscan"]["eps"],
         min_samples=config["optimization"]["clustering"]["dbscan"]["min_samples"],

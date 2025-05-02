@@ -205,7 +205,10 @@ def main():
     closest_locations_gdf = find_closest_potential(cluster_centers, potential_sites)
     merged_locations = merge_locations(rcps, closest_locations_gdf)
     merged_locations.to_file(snakemake.output['rcps_clustering_ors'], driver='GPKG')
-    
+
+    # Save the cluster centers
+    cluster_centers.to_file(snakemake.output['clusters'], driver='GPKG')
+
     # Build and save the map
     m = build_map(rcps, closest_locations_gdf, flats_duration)
     m.save(snakemake.output['map_clustering_ors'])
