@@ -35,9 +35,9 @@ This project aims to optimize the placement of Recycling Collection Points (RCPs
 - **Routing Engine Selection**: The routing engine selection in the configuration file does not work properly. The main branch only works with Valhalla, not with OpenRouteService (ORS). For ORS, use the `generate_ors_results` branch instead.
 - **Logging System**: The logging functionality is not fully implemented and may not work as expected.
 - **Data Download**: Automatic data download could not be implemented due to time constraints. Data must be manually placed in the appropriate directories.
-- **Optimization Solver**: PuLP only works with the commercial Gurobi solver, as the open source optimizers cause the script to break.
+- **Optimization Solver**: The linear optimisation only works with the commercial Gurobi solver, as the open source solvers inlcuded in PulP cause the script to break.
 
-These issues may be addressed in future updates. 
+These issues may be addressed in future updates.
 
 ## Directory Structure
 ```
