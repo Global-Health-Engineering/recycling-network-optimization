@@ -29,15 +29,6 @@ This repository compliments the openly-accessible master’s thesis, available o
 ## Project Overview
 This project aims to optimize the placement of Recycling Collection Points (RCPs) in Zurich, Switzerland. Using spatial analysis and optimization techniques, we identify optimal locations for new RCPs to improve accessibility for residents while minimizing the total number of facilities needed. The workflow uses a routing engine to calculate actual walking durations using the street network rather than relying on airline distances.
 
-## Disclaimer
-**Important Notice**: This code was developed as part of a master's thesis and should be considered a research prototype rather than production-ready software. Several known issues exist:
-
-- **Routing Engine Selection**: The routing engine selection in the configuration file does not work properly. The main branch only works with Valhalla, not with OpenRouteService (ORS). For ORS, use the `generate_ors_results` branch instead.
-- **Logging System**: The logging functionality is not fully implemented and may not work as expected.
-- **Data Download**: Automatic data download could not be implemented due to time constraints. Data must be manually placed in the appropriate directories.
-- **Optimization Solver**: The linear optimisation only works with the commercial Gurobi solver, as the open source solvers inlcuded in PulP cause the script to break.
-
-These issues may be addressed in future updates.
 
 ## Directory Structure
 ```
@@ -283,6 +274,12 @@ The project supports two routing engines:
 
 To switch routing engines, modify the `routing_engine` parameter in `config/config.yaml`.
 
-> **IMPORTANT CAVEAT**: Currently, the routing engine selection in the configuration file does not work properly. The main branch only works with Valhalla, not with ORS. If you need to use OpenRouteService, please use the `generate_ors_results` branch instead.
->
-> This project was developed as a master thesis at the Global Health Engineering group in collaboration with ERZ (Entsorgung + Recycling Zürich). The routing engine issues are expected to be fixed when the work is published in a future paper.
+## Disclaimer
+**Important Notice**: This code was developed as a master thesis at the Global Health Engineering group in collaboration with ERZ (Entsorgung + Recycling Zürich). It should be considered a research protype. Several known issues exist:
+
+- **Routing Engine Selection**: The routing engine selection in the configuration file does not work properly. The main branch only works with Valhalla, not with OpenRouteService (ORS). For ORS, use the `generate_ors_results` branch instead.
+- **Logging System**: The logging functionality is not fully implemented and may not work as expected.
+- **Data Download**: Automatic data download could not be implemented due to time constraints. Data must be manually placed in the appropriate directories.
+- **Optimization Solver**: The linear optimisation only works with the commercial Gurobi solver, as the open source solvers inlcuded in PulP cause the script to break.
+
+These issues may be addressed in future updates.
