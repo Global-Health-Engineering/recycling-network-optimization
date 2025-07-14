@@ -67,4 +67,7 @@ p_analysis:
     start: 1   # Starting value
     end: 31    # Ending value (exclusive)
     step: 1    # Step size
-  
+
+# Euclidean distance analysis parameters
+euclidean_analysis:
+  walking_speed_kmh: 5.0  # Average walking speed in km/h for duration calculations

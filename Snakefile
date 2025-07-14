@@ -30,3 +30,6 @@ include: "rules/p_analysis_rules.smk"
 
 # Sensitivity analysis rules
 include: "rules/sensitivity_rules.smk"
+
+# Euclidean distance analysis rules (separate workflow)
+include: "rules/euclidean_analysis_rules.smk"
