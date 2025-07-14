@@ -13,13 +13,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Get file paths from snakemake
 INPUT_FLATS = snakemake.input.flats
+INPUT_RCPS_CURRENT = snakemake.input.rcps_current
 INPUT_RCPS1 = snakemake.input.rcps1
 INPUT_RCPS2 = snakemake.input.rcps2
 INPUT_RCPS3 = snakemake.input.rcps3
 
-OUTPUT1 = snakemake.output[0]  # flats_duration_clustering_iso_euclidean.gpkg
-OUTPUT2 = snakemake.output[1]  # flats_duration_clustering_ors_euclidean.gpkg
-OUTPUT3 = snakemake.output[2]  # flats_duration_opt_euclidean.gpkg
+OUTPUT_CURRENT = snakemake.output[0]  # flats_duration_current_euclidean.gpkg
+OUTPUT1 = snakemake.output[1]  # flats_duration_clustering_iso_euclidean.gpkg
+OUTPUT2 = snakemake.output[2]  # flats_duration_clustering_ors_euclidean.gpkg
+OUTPUT3 = snakemake.output[3]  # flats_duration_opt_euclidean.gpkg
 
 # Get walking speed from params (km/h)
 WALKING_SPEED_KMH = snakemake.params.walking_speed_kmh
@@ -169,20 +171,23 @@ def find_nearest_rcp_euclidean(flat_geom, tree, rcp_coords, rcp_ids):
 # Load datasets
 logger.info("Loading datasets...")
 flats = gpd.read_file(INPUT_FLATS).to_crs(epsg=4326)
+rcps_current = gpd.read_file(INPUT_RCPS_CURRENT).to_crs(epsg=4326)
 rcps1 = gpd.read_file(INPUT_RCPS1).to_crs(epsg=4326)
 rcps2 = gpd.read_file(INPUT_RCPS2).to_crs(epsg=4326)
 rcps3 = gpd.read_file(INPUT_RCPS3).to_crs(epsg=4326)
 
 logger.info(f"Loaded {len(flats)} flats")
+logger.info(f"Loaded {len(rcps_current)} RCPs (current)")
 logger.info(f"Loaded {len(rcps1)} RCPs (clustering_iso)")
 logger.info(f"Loaded {len(rcps2)} RCPs (clustering_ors)")
 logger.info(f"Loaded {len(rcps3)} RCPs (optimization)")
 
 # Create output directory if it doesn't exist
-os.makedirs(os.path.dirname(OUTPUT1), exist_ok=True)
+os.makedirs(os.path.dirname(OUTPUT_CURRENT), exist_ok=True)
 
 # Process each method
 for rcps, output_path, method_name in [
+    (rcps_current, OUTPUT_CURRENT, "current"),
     (rcps1, OUTPUT1, "clustering_iso"),
     (rcps2, OUTPUT2, "clustering_ors"),
     (rcps3, OUTPUT3, "optimization")
