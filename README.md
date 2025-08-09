@@ -20,7 +20,7 @@
 
 <br>
 <p align="middle"> 
-<img src="img/ETH_GHE_logo_negative.svg" width=600>
+<img src="img/ETH_GHE_logo.svg" width=600>
 <br><br>
 This repository compliments the openly-accessible master’s thesis, available on the<br \>  
 <a href="">ETH Research Collection</a>.
@@ -59,6 +59,13 @@ rcp_project/
 ├── scripts/               # Python scripts used in workflow
 └── Snakefile              # Main workflow definition
 ```
+
+## Data Download
+This repository is provided without data, which is too big to be stored on Github. However, both raw and derived data are available under [this Zenodo entry](https://doi.org/10.5281/zenodo.16780698). A script to automatically download and extract raw and derived data to their directories is also available. To use it, run from the main repo directory the following command in unix terminal:
+```
+bash download_data.sh
+```
+If you are using Windows you may need to download the zipped data manually and extract its content to `data` directory, replacing empty `data/raw_data` and `data/derived_data`.
 
 ## Data Description
 
