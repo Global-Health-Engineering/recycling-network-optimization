@@ -28,4 +28,7 @@ test.ipynb
 python/.vscode/extensions.json
 /archive
 /notebooks
-
+**/._.DS_Store
+**/.DS_Store
+._.DS_Store
+.DS_Store
