@@ -2,32 +2,38 @@
 <svg
    id="Layer_1"
    data-name="Layer 1"
-   viewBox="0 0 499.3458 77.840128"
+   viewBox="0 0 498.9 78.17"
    version="1.1"
-   width="499.34579"
-   height="77.840126"
+   sodipodi:docname="ETH_GHE_logo.svg"
+   width="498.89999"
+   height="78.169998"
+   inkscape:version="1.3 (0e150ed, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview47"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.5638907"
+     inkscape:cx="235.95"
+     inkscape:cy="25.896951"
+     inkscape:window-width="2560"
+     inkscape:window-height="1312"
+     inkscape:window-x="1920"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
   <defs
      id="defs3">
     <style
-       id="style1">
-      .cls-1 {
-        fill: url(#linear-gradient);
-      }
-
-      .cls-1, .cls-2, .cls-3 {
-        stroke-width: 0px;
-      }
-
-      .cls-4 {
-        isolation: isolate;
-      }
-
-      .cls-3 {
-        fill: #fff;
-      }
-    </style>
+       id="style1">&#10;      .cls-1 {&#10;        fill: url(#linear-gradient);&#10;      }&#10;&#10;      .cls-1, .cls-2, .cls-3 {&#10;        stroke-width: 0px;&#10;      }&#10;&#10;      .cls-4 {&#10;        isolation: isolate;&#10;      }&#10;&#10;      .cls-3 {&#10;        fill: #fff;&#10;      }&#10;    </style>
     <linearGradient
        id="linear-gradient"
        x1="556.59003"
@@ -55,18 +61,11 @@
      id="rect47"
      width="493.73532"
      height="72.989792"
-     x="2.9500175"
-     y="2.768909" />
-  <rect
-     style="fill:#ffffff;stroke:#ffffff;stroke-dasharray:none"
-     id="rect1"
-     width="498.34579"
-     height="76.840126"
-     x="0.5"
-     y="0.5" />
+     x="3.1498196"
+     y="3.1498184" />
   <g
      id="g9"
-     transform="translate(13.822029,12.14095)">
+     transform="translate(15.5187,13.984148)">
     <g
        id="g8">
       <path
@@ -81,12 +80,12 @@
          style="stroke-width:0px" />
       <polygon
          class="cls-2"
-         points="376.4,20.4 376.96,17.64 361.64,17.64 361.08,20.51 361.08,20.56 372.32,20.56 357.35,37.49 357.34,37.5 356.78,40.26 372.73,40.26 373.3,37.34 361.37,37.34 376.39,20.41 "
+         points="376.39,20.41 376.4,20.4 376.96,17.64 361.64,17.64 361.08,20.51 361.08,20.56 372.32,20.56 357.35,37.49 357.34,37.5 356.78,40.26 372.73,40.26 373.3,37.34 361.37,37.34 "
          id="polygon4"
          style="stroke-width:0px" />
       <polygon
          class="cls-2"
-         points="420.93,40.26 424.23,40.26 428.72,17.64 425.48,17.64 420.95,40.21 "
+         points="424.23,40.26 428.72,17.64 425.48,17.64 420.95,40.21 420.93,40.26 "
          id="polygon5"
          style="stroke-width:0px" />
       <path
@@ -101,29 +100,29 @@
          style="stroke-width:0px" />
       <polygon
          class="cls-2"
-         points="427.54,7.31 426.71,11.43 430.01,11.43 430.83,7.31 "
+         points="430.01,11.43 430.83,7.31 427.54,7.31 426.71,11.43 "
          id="polygon6"
          style="stroke-width:0px" />
       <polygon
          class="cls-2"
-         points="395.5,7.31 394.66,11.43 397.96,11.43 398.78,7.31 "
+         points="397.96,11.43 398.78,7.31 395.5,7.31 394.66,11.43 "
          id="polygon7"
          style="stroke-width:0px" />
       <polygon
          class="cls-2"
-         points="386.71,7.31 385.87,11.43 389.18,11.43 389.99,7.31 "
+         points="389.18,11.43 389.99,7.31 386.71,7.31 385.87,11.43 "
          id="polygon8"
          style="stroke-width:0px" />
     </g>
     <polygon
        class="cls-2"
-       points="348.12,40.27 354.75,7.31 344.45,7.31 341.84,20.08 334.43,20.08 337.03,7.31 274,7.31 267.38,40.27 292.51,40.27 294.16,32.03 279.32,32.03 280.22,27.5 295.05,27.5 296.54,20.08 281.71,20.08 282.6,15.55 306.12,15.55 301.16,40.27 311.46,40.27 316.42,15.55 325.07,15.55 320.11,40.27 330.41,40.27 332.95,27.5 340.37,27.5 337.82,40.27 "
+       points="295.05,27.5 296.54,20.08 281.71,20.08 282.6,15.55 306.12,15.55 301.16,40.27 311.46,40.27 316.42,15.55 325.07,15.55 320.11,40.27 330.41,40.27 332.95,27.5 340.37,27.5 337.82,40.27 348.12,40.27 354.75,7.31 344.45,7.31 341.84,20.08 334.43,20.08 337.03,7.31 274,7.31 267.38,40.27 292.51,40.27 294.16,32.03 279.32,32.03 280.22,27.5 "
        id="polygon9"
        style="stroke-width:0px" />
   </g>
   <g
      id="g47"
-     transform="translate(13.822029,12.14095)">
+     transform="translate(15.5187,13.984148)">
     <g
        class="cls-4"
        id="g10"

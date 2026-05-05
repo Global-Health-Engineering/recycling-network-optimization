@@ -5,18 +5,10 @@
 <h1> Algorithms and data for optimizing the recycling network in the city of Zurich, Switzerland </h1>
 
 <b>Contributors</b>  
-- Silas Schweizer <a href="https://orcid.org/0009-0000-1284-7063">
-<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0009-0000-1284-7063
-</a> *author, developer, maintainer*  
-- Jakub Tkaczuk <a href="https://orcid.org/0000-0001-7997-9423">
-<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0001-7997-9423
-</a> *supervisor, maintainer*  
-- Elizabeth Tilley <a href="https://orcid.org/0000-0002-2095-9724">
-<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-2095-9724
-</a> *supervisor*  
-- Nicolas Seemann-Ricard <a href="https://orcid.org/0000-0002-0945-7475">
-<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /> 0000-0002-0945-7475
-</a> *technical support*  
+- **Silas Schweizer** &mdash; [![ORCID](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) 0009-0000-1284-7063](https://orcid.org/0009-0000-1284-7063) &mdash; *author, developer, maintainer*
+- **Jakub Tkaczuk** &mdash; [![ORCID](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) 0000-0001-7997-9423](https://orcid.org/0000-0001-7997-9423) &mdash; *supervisor, maintainer*
+- **Elizabeth Tilley** &mdash; [![ORCID](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) 0000-0002-2095-9724](https://orcid.org/0000-0002-2095-9724) &mdash; *supervision*
+- **Nicolas Seeman-Ricard** &mdash; [![ORCID](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) 0000-0002-0945-7475](https://orcid.org/0000-0002-0945-7475) &mdash; *supervision, technical support*
 
 <br>
 <p align="middle"> 
